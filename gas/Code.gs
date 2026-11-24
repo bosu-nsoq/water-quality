@@ -4,7 +4,7 @@
 // ============================================================
 
 // หากใช้เป็น Standalone Script ให้ใส่ Spreadsheet ID ที่นี่ (ถ้าสร้างจากเมนู ส่วนขยาย > Apps Script ไม่ต้องใส่)
-var SPREADSHEET_ID = "";
+var SPREADSHEET_ID = "1yCpq34Vc6oP66rIjziswlC365JvF4f1eytE1iRhB4os";
 
 function getSpreadsheet() {
   try {
