@@ -58,13 +58,79 @@
       width: 100%;
     }
 
+    /* แถบสถานะผู้ใช้งาน (Guest / Admin) */
+    .glass-bar {
+      background: rgba(255, 255, 255, 0.9);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 8px 14px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 20px rgba(0, 50, 100, 0.12);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+      white-space: nowrap;
+    }
+
+    .user-pill {
+      background: rgba(148, 210, 189, 0.35);
+      color: #005f73;
+      padding: 4px 12px;
+      border-radius: 20px;
+      font-size: 13px;
+      font-weight: 600;
+      white-space: nowrap;
+      display: inline-flex;
+      align-items: center;
+      border: 1px solid rgba(148, 210, 189, 0.7);
+    }
+
+    .user-pill.admin {
+      background: #fef08a;
+      color: #854d0e;
+      border-color: #fde047;
+    }
+
+    .btn-auth {
+      font-size: 12.5px;
+      border-radius: 20px;
+      padding: 4px 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      border: 1px solid #0a9396;
+      background: #ffffff;
+      color: #005f73;
+      transition: all 0.2s ease;
+      cursor: pointer;
+    }
+    .btn-auth:hover {
+      background: #0a9396;
+      color: #ffffff;
+    }
+    .btn-auth.logout {
+      border-color: #e63946;
+      color: #e63946;
+    }
+    .btn-auth.logout:hover {
+      background: #e63946;
+      color: #ffffff;
+    }
+
+    .btn-pin-change {
+      font-size: 11px;
+      background: transparent;
+      border: none;
+      color: #854d0e;
+      text-decoration: underline;
+      padding: 0 4px;
+      cursor: pointer;
+    }
+
     .glass-panel {
       background: rgba(255, 255, 255, 0.88);
       backdrop-filter: blur(12px);
       -webkit-backdrop-filter: blur(12px);
       border-radius: 20px;
       padding: 24px 20px;
-      margin-top: 10px;
       margin-bottom: 24px;
       box-shadow: 0 8px 32px rgba(0, 50, 100, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.5);
@@ -112,6 +178,7 @@
       align-items: center;
       justify-content: center;
       font-size: 1rem;
+      cursor: pointer;
     }
     .btn-save { background-color: var(--primary); color: white; border: none; }
     .btn-save:hover, .btn-save:active { background-color: var(--primary-dark); color: white; }
@@ -124,7 +191,9 @@
     .btn-back { background-color: #ee9b00; color: white; border: none; }
     .btn-back:hover, .btn-back:active { background-color: #ca8200; color: white; }
 
-    #historySection, #statsSection { display: none; }
+    #mainSection, #historySection { display: none; }
+    #statsSection { display: block; } /* โหมด Guest: แสดงเป็นกราฟในหน้าแรกเลย */
+
     .table { font-size: 0.85rem; background-color: white; border-radius: 12px; overflow: hidden; }
     .table th { background-color: var(--primary); color: white; font-weight: 600; }
     .badge-result { font-size: 0.78rem; padding: 4px 10px; border-radius: 14px; margin-top: 4px; display: inline-block; }
@@ -170,6 +239,22 @@
       width: 100%;
       height: 290px;
       margin-bottom: 16px;
+    }
+
+    /* ------------------------------------------------------------ */
+    /* การควบคุมการแสดงผลตามสิทธิ์ Guest vs Admin */
+    /* ------------------------------------------------------------ */
+    .admin-only {
+      display: none !important;
+    }
+    body.is-admin .admin-only {
+      display: block !important;
+    }
+    body.is-admin .admin-only-flex {
+      display: flex !important;
+    }
+    body.is-admin .guest-only {
+      display: none !important;
     }
 
     /* SweetAlert Mali font */
@@ -220,7 +305,7 @@
         padding: 0 !important;
         margin: 0 !important;
       }
-      .main-wrapper, .glass-panel, .swal2-container, #waterForm, button, select, input, hr {
+      .main-wrapper, .glass-panel, .glass-bar, .swal2-container, #waterForm, button, select, input, hr {
         display: none !important;
       }
       #printReportContainer {
@@ -237,54 +322,84 @@
 <body>
 
 <div class="container main-wrapper">
-  <!-- หน้าหลัก: บันทึกข้อมูล -->
-  <div class="glass-panel" id="mainSection">
-    <h3 class="app-title">💧 บันทึกคุณภาพน้ำ</h3>
-    <hr class="my-3">
-    
-    <form id="waterForm" onsubmit="submitForm(event)">
-      <!-- ช่องเลือกวันที่แบบ พ.ศ. (dd/mm/yyyy) คลิกเปิดปฏิทินทันที -->
-      <div class="mb-3">
-        <label>📅 วันที่บันทึก (พ.ศ.)</label>
-        <div class="date-picker-container">
-          <input type="text" class="form-control" id="recordDateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('recordDate')" title="คลิกเพื่อเลือกวันที่">
-          <input type="date" class="form-control" id="recordDate" onchange="onDateChange('recordDate', 'recordDateDisplay', this.value)" required>
-        </div>
-      </div>
-      
-      <div class="mb-3">
-        <label>🧪 ค่า pH (0-14)</label>
-        <input type="number" class="form-control" id="phValue" step="0.01" min="0" max="14" placeholder="เช่น 7.2" inputmode="decimal" oninput="previewAll()" required>
-        <div id="phFeedback" class="mt-1"></div>
-      </div>
-      
-      <div class="mb-3">
-        <label>🔬 ค่า TDS (ppm)</label>
-        <input type="number" class="form-control" id="tdsValue" step="0.01" min="0" placeholder="เช่น 250.5" inputmode="decimal" oninput="previewAll()" required>
-        <div id="tdsFeedback" class="mt-1"></div>
-      </div>
-      
-      <!-- ส่วนแสดงผลรวมอัตโนมัติ -->
-      <div id="overallFeedback" class="mb-3 text-center fw-bold"></div>
-      
-      <button type="submit" class="btn btn-custom btn-save" id="saveBtn">💾 บันทึกผล</button>
-    </form>
-    
-    <hr class="my-3">
-    <div class="row g-2">
-      <div class="col-6">
-        <button class="btn btn-custom btn-history" onclick="showSection('historySection')">📜 ดูประวัติ</button>
-      </div>
-      <div class="col-6">
-        <button class="btn btn-custom btn-stats" onclick="showSection('statsSection')">📊 ดูสถิติ</button>
-      </div>
+  <!-- แถบสถานะผู้ใช้งาน (Guest / Admin) พร้อมปุ่มใส่ PIN เข้าสู่ระบบ -->
+  <div class="glass-bar d-flex justify-content-between align-items-center">
+    <div class="d-flex align-items-center gap-2">
+      <span id="roleBadge" class="user-pill">👤 ทั่วไป (Guest)</span>
+      <span id="adminChangePinBox" class="admin-only" style="display:none;">
+        <button type="button" class="btn-pin-change" onclick="changeAdminPin()">เปลี่ยน PIN</button>
+      </span>
     </div>
+    <button type="button" class="btn-auth" id="authBtn" onclick="handleAuthClick()">
+      🔑 เข้าสู่ระบบ Admin
+    </button>
   </div>
 
-  <!-- หน้า: ประวัติและพิมพ์ประวัติ -->
+  <!-- 1. หน้าสถิติและกราฟ (แสดงเป็นหน้าแรกเลยสำหรับโหมด Guest และ Admin) -->
+  <div class="glass-panel" id="statsSection">
+    <h3 class="app-title">📊 สถิติคุณภาพน้ำ</h3>
+    
+    <!-- ปุ่มสำหรับ Admin สลับไปหน้าบันทึกผล -->
+    <div class="admin-only my-3">
+      <div class="row g-2">
+        <div class="col-6">
+          <button type="button" class="btn btn-custom btn-save" onclick="showSection('mainSection')">➕ บันทึกข้อมูล</button>
+        </div>
+        <div class="col-6">
+          <button type="button" class="btn btn-custom btn-history" onclick="showSection('historySection')">📜 ดูประวัติ</button>
+        </div>
+      </div>
+    </div>
+
+    <label class="mt-2">📅 เลือกช่วงเวลาแสดงผล:</label>
+    <select class="form-select mb-2" id="timeFilter" onchange="onTimeFilterChange()">
+      <option value="all">ทั้งหมด</option>
+      <option value="week">สัปดาห์นี้</option>
+      <option value="month">เดือนนี้</option>
+      <option value="year">ปีนี้</option>
+      <option value="custom">กำหนดช่วงวันที่เอง...</option>
+    </select>
+
+    <!-- ช่องกำหนดช่วงวันที่เอง (แสดงเมื่อเลือก กำหนดช่วงวันที่เอง) -->
+    <div id="customDateRangeBox" style="display: none;" class="mb-3">
+      <div class="row g-2">
+        <div class="col-6">
+          <label style="font-size: 0.85rem;">ตั้งแต่วันที่:</label>
+          <div class="date-picker-container">
+            <input type="text" class="form-control date-display-input" id="customStartDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customStart')">
+            <input type="date" class="form-control date-raw-input" id="customStart" onchange="onDateChange('customStart', 'customStartDisplay', this.value); updateChart();">
+          </div>
+        </div>
+        <div class="col-6">
+          <label style="font-size: 0.85rem;">ถึงวันที่:</label>
+          <div class="date-picker-container">
+            <input type="text" class="form-control date-display-input" id="customEndDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customEnd')">
+            <input type="date" class="form-control date-raw-input" id="customEnd" onchange="onDateChange('customEnd', 'customEndDisplay', this.value); updateChart();">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- กราฟ Chart.js ปรับขนาดให้เหมาะกับมือถือแนวตั้ง -->
+    <div class="chart-box">
+      <canvas id="waterChart"></canvas>
+    </div>
+
+    <!-- ปุ่มสำหรับ Guest: ดูประวัติย้อนหลัง -->
+    <button type="button" class="btn btn-custom btn-history guest-only" onclick="showSection('historySection')">
+      📜 ดูประวัติย้อนหลัง
+    </button>
+
+    <!-- ปุ่มสำหรับ Admin: พิมพ์รายงานกราฟ -->
+    <button type="button" class="btn btn-custom btn-print admin-only" onclick="printReport()">
+      🖨️ พิมพ์รายงานกราฟ
+    </button>
+  </div>
+
+  <!-- 2. หน้าประวัติและพิมพ์ประวัติ -->
   <div class="glass-panel" id="historySection">
     <h3 class="app-title">📜 ประวัติย้อนหลัง</h3>
-    <button class="btn btn-custom btn-back my-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    <button class="btn btn-custom btn-back my-3" onclick="goHome()">⬅️ กลับหน้าหลัก</button>
     
     <!-- ตัวเลือกช่วงเวลาของหน้าประวัติ -->
     <div class="mb-3">
@@ -333,55 +448,54 @@
       </table>
     </div>
 
-    <!-- ปุ่มพิมพ์ประวัติคุณภาพน้ำ (ย้ายมาไว้ด้านล่างประวัติ) -->
-    <button type="button" class="btn btn-custom btn-print mt-3 mb-1" onclick="printHistoryReport()">
+    <!-- ปุ่มพิมพ์ประวัติคุณภาพน้ำ (แสดงเฉพาะ Admin เท่านั้น) -->
+    <button type="button" class="btn btn-custom btn-print mt-3 mb-1 admin-only" onclick="printHistoryReport()">
       🖨️ พิมพ์ประวัติคุณภาพน้ำ
     </button>
   </div>
 
-  <!-- หน้า: สถิติและพิมพ์รายงาน -->
-  <div class="glass-panel" id="statsSection">
-    <h3 class="app-title">📊 สถิติคุณภาพน้ำ</h3>
-    <button class="btn btn-custom btn-back my-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+  <!-- 3. หน้าบันทึกผล (เฉพาะ Admin ที่ใส่ PIN แล้วเท่านั้น) -->
+  <div class="glass-panel" id="mainSection">
+    <h3 class="app-title">💧 บันทึกคุณภาพน้ำ</h3>
+    <hr class="my-3">
     
-    <label>📅 เลือกช่วงเวลาแสดงผล:</label>
-    <select class="form-select mb-2" id="timeFilter" onchange="onTimeFilterChange()">
-      <option value="all">ทั้งหมด</option>
-      <option value="week">สัปดาห์นี้</option>
-      <option value="month">เดือนนี้</option>
-      <option value="year">ปีนี้</option>
-      <option value="custom">กำหนดช่วงวันที่เอง...</option>
-    </select>
-
-    <!-- ช่องกำหนดช่วงวันที่เอง (แสดงเมื่อเลือก กำหนดช่วงวันที่เอง) -->
-    <div id="customDateRangeBox" style="display: none;" class="mb-3">
-      <div class="row g-2">
-        <div class="col-6">
-          <label style="font-size: 0.85rem;">ตั้งแต่วันที่:</label>
-          <div class="date-picker-container">
-            <input type="text" class="form-control date-display-input" id="customStartDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customStart')">
-            <input type="date" class="form-control date-raw-input" id="customStart" onchange="onDateChange('customStart', 'customStartDisplay', this.value); updateChart();">
-          </div>
-        </div>
-        <div class="col-6">
-          <label style="font-size: 0.85rem;">ถึงวันที่:</label>
-          <div class="date-picker-container">
-            <input type="text" class="form-control date-display-input" id="customEndDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customEnd')">
-            <input type="date" class="form-control date-raw-input" id="customEnd" onchange="onDateChange('customEnd', 'customEndDisplay', this.value); updateChart();">
-          </div>
+    <form id="waterForm" onsubmit="submitForm(event)">
+      <!-- ช่องเลือกวันที่แบบ พ.ศ. (dd/mm/yyyy) คลิกเปิดปฏิทินทันที -->
+      <div class="mb-3">
+        <label>📅 วันที่บันทึก (พ.ศ.)</label>
+        <div class="date-picker-container">
+          <input type="text" class="form-control" id="recordDateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('recordDate')" title="คลิกเพื่อเลือกวันที่">
+          <input type="date" class="form-control" id="recordDate" onchange="onDateChange('recordDate', 'recordDateDisplay', this.value)" required>
         </div>
       </div>
+      
+      <div class="mb-3">
+        <label>🧪 ค่า pH (0-14)</label>
+        <input type="number" class="form-control" id="phValue" step="0.01" min="0" max="14" placeholder="เช่น 7.2" inputmode="decimal" oninput="previewAll()" required>
+        <div id="phFeedback" class="mt-1"></div>
+      </div>
+      
+      <div class="mb-3">
+        <label>🔬 ค่า TDS (ppm)</label>
+        <input type="number" class="form-control" id="tdsValue" step="0.01" min="0" placeholder="เช่น 250.5" inputmode="decimal" oninput="previewAll()" required>
+        <div id="tdsFeedback" class="mt-1"></div>
+      </div>
+      
+      <!-- ส่วนแสดงผลรวมอัตโนมัติ -->
+      <div id="overallFeedback" class="mb-3 text-center fw-bold"></div>
+      
+      <button type="submit" class="btn btn-custom btn-save" id="saveBtn">💾 บันทึกผล</button>
+    </form>
+    
+    <hr class="my-3">
+    <div class="row g-2">
+      <div class="col-6">
+        <button class="btn btn-custom btn-history" onclick="showSection('historySection')">📜 ดูประวัติ</button>
+      </div>
+      <div class="col-6">
+        <button class="btn btn-custom btn-stats" onclick="showSection('statsSection')">📊 ดูสถิติ</button>
+      </div>
     </div>
-
-    <!-- กราฟ Chart.js ปรับขนาดให้เหมาะกับมือถือแนวตั้ง -->
-    <div class="chart-box">
-      <canvas id="waterChart"></canvas>
-    </div>
-
-    <!-- ปุ่มพิมพ์รายงานกราฟ -->
-    <button type="button" class="btn btn-custom btn-print" onclick="printReport()">
-      🖨️ พิมพ์รายงานกราฟ
-    </button>
   </div>
 </div>
 
@@ -394,8 +508,193 @@
   // ============================================================
   const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQI6ql2evbiBkVFo1RxOFqyNyGQPTQik7C9R9MluOsPmsRyVuuSj7MzF_mG-6D1ts-/exec";
 
+  // สถานะโหมดผู้ใช้ (เริ่มต้นเข้าสู่ระบบเป็นโหมด Guest เสมอ)
+  let isAdmin = false;
   let rawData = [];
   let waterChartObj = null;
+
+  // ------------------------------------------------------------
+  // ระบบจัดการสิทธิ์ Guest vs Admin (PIN 4 หลัก)
+  // ------------------------------------------------------------
+  function getAdminPin() {
+    return localStorage.getItem('WATER_ADMIN_PIN') || '1234';
+  }
+
+  function handleAuthClick() {
+    if (isAdmin) {
+      logoutAdmin();
+    } else {
+      promptAdminPin();
+    }
+  }
+
+  function promptAdminPin() {
+    const currentPin = getAdminPin();
+    
+    Swal.fire({
+      title: '🔑 เข้าสู่ระบบ Admin',
+      html: `
+        <div style="font-family: 'Mali', sans-serif; text-align: center;">
+          <p style="font-size: 0.92rem; color: #555; margin-bottom: 12px;">กรุณากรอกรหัส PIN 4 หลักเพื่อเข้าสู่ระบบผู้ดูแล:</p>
+          <input type="password" id="adminPinInput" class="form-control text-center mx-auto" 
+                 inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" 
+                 style="font-size: 28px; letter-spacing: 12px; font-weight: bold; width: 170px; border-radius: 12px; height: 50px;">
+          <small class="text-muted d-block mt-2" style="font-size: 0.78rem;">(รหัสเริ่มต้น: 1234)</small>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'ยืนยัน',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#0a9396',
+      cancelButtonColor: '#aaa',
+      customClass: { popup: 'swal-font' },
+      didOpen: () => {
+        const input = document.getElementById('adminPinInput');
+        if (input) {
+          input.focus();
+          input.addEventListener('keyup', (e) => {
+            if (e.key === 'Enter') Swal.clickConfirm();
+          });
+        }
+      },
+      preConfirm: () => {
+        const entered = document.getElementById('adminPinInput').value;
+        if (!entered || entered.length !== 4) {
+          Swal.showValidationMessage('กรุณากรอกรหัส PIN 4 หลักให้ครบถ้วน');
+          return false;
+        }
+        if (entered !== currentPin) {
+          Swal.showValidationMessage('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+          return false;
+        }
+        return true;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        setAdminMode(true);
+        Swal.fire({
+          icon: 'success',
+          title: 'เข้าสู่ระบบ Admin สำเร็จ!',
+          text: 'ปลดล็อกสิทธิ์บันทึกข้อมูลและสั่งพิมพ์รายงานเรียบร้อยแล้ว',
+          timer: 1600,
+          showConfirmButton: false,
+          customClass: { popup: 'swal-font' }
+        });
+      }
+    });
+  }
+
+  function setAdminMode(status) {
+    isAdmin = status;
+    updateRoleUI();
+    if (isAdmin) {
+      showSection('mainSection'); // Admin เปิดมาหน้าบันทึกข้อมูล
+    } else {
+      showSection('statsSection'); // Guest แสดงกราฟสถิติในหน้าแรกเลย
+    }
+  }
+
+  function logoutAdmin() {
+    setAdminMode(false);
+    Swal.fire({
+      icon: 'info',
+      title: 'ออกจากระบบเรียบร้อย',
+      text: 'สลับกลับสู่โหมดทั่วไป (Guest)',
+      timer: 1400,
+      showConfirmButton: false,
+      customClass: { popup: 'swal-font' }
+    });
+  }
+
+  function updateRoleUI() {
+    const roleBadge = document.getElementById('roleBadge');
+    const authBtn = document.getElementById('authBtn');
+    const pinChangeBox = document.getElementById('adminChangePinBox');
+
+    if (isAdmin) {
+      document.body.classList.add('is-admin');
+      if (roleBadge) {
+        roleBadge.className = 'user-pill admin';
+        roleBadge.innerHTML = '👑 ผู้ดูแล (Admin)';
+      }
+      if (authBtn) {
+        authBtn.className = 'btn-auth logout';
+        authBtn.innerHTML = '🚪 ออกจากระบบ';
+      }
+      if (pinChangeBox) pinChangeBox.style.display = 'inline-block';
+    } else {
+      document.body.classList.remove('is-admin');
+      if (roleBadge) {
+        roleBadge.className = 'user-pill';
+        roleBadge.innerHTML = '👤 ทั่วไป (Guest)';
+      }
+      if (authBtn) {
+        authBtn.className = 'btn-auth';
+        authBtn.innerHTML = '🔑 เข้าสู่ระบบ Admin';
+      }
+      if (pinChangeBox) pinChangeBox.style.display = 'none';
+    }
+  }
+
+  function changeAdminPin() {
+    const currentPin = getAdminPin();
+    Swal.fire({
+      title: '🔐 เปลี่ยนรหัส PIN Admin',
+      html: `
+        <div style="font-family: 'Mali', sans-serif; text-align: left; font-size: 0.9rem;">
+          <label class="mb-1">รหัส PIN เดิม:</label>
+          <input type="password" id="oldPin" class="form-control mb-2 text-center" maxlength="4" inputmode="numeric" placeholder="••••">
+          <label class="mb-1">รหัส PIN ใหม่ (4 หลัก):</label>
+          <input type="password" id="newPin1" class="form-control mb-2 text-center" maxlength="4" inputmode="numeric" placeholder="••••">
+          <label class="mb-1">ยืนยันรหัส PIN ใหม่:</label>
+          <input type="password" id="newPin2" class="form-control text-center" maxlength="4" inputmode="numeric" placeholder="••••">
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: 'บันทึก PIN',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#0a9396',
+      customClass: { popup: 'swal-font' },
+      preConfirm: () => {
+        const oldP = document.getElementById('oldPin').value;
+        const n1 = document.getElementById('newPin1').value;
+        const n2 = document.getElementById('newPin2').value;
+        if (oldP !== currentPin) {
+          Swal.showValidationMessage('รหัส PIN เดิมไม่ถูกต้อง');
+          return false;
+        }
+        if (!/^\d{4}$/.test(n1)) {
+          Swal.showValidationMessage('รหัส PIN ใหม่ต้องเป็นตัวเลข 4 หลัก');
+          return false;
+        }
+        if (n1 !== n2) {
+          Swal.showValidationMessage('รหัส PIN ใหม่ทั้ง 2 ช่องไม่ตรงกัน');
+          return false;
+        }
+        return n1;
+      }
+    }).then((res) => {
+      if (res.isConfirmed) {
+        localStorage.setItem('WATER_ADMIN_PIN', res.value);
+        Swal.fire({
+          icon: 'success',
+          title: 'เปลี่ยน PIN สำเร็จ!',
+          text: 'รหัส PIN ใหม่ของท่านถูกบันทึกแล้ว',
+          timer: 1500,
+          showConfirmButton: false,
+          customClass: { popup: 'swal-font' }
+        });
+      }
+    });
+  }
+
+  function goHome() {
+    if (isAdmin) {
+      showSection('mainSection');
+    } else {
+      showSection('statsSection');
+    }
+  }
 
   // ------------------------------------------------------------
   // ระบบจัดการวันที่ตามมาตรฐานไทย พ.ศ. (dd/mm/yyyy)
@@ -574,7 +873,7 @@
   }
 
   // ------------------------------------------------------------
-  // บันทึกข้อมูลไปยัง Google Sheets อัตโนมัติ (ทำงานเบื้องหลัง)
+  // บันทึกข้อมูลไปยัง Google Sheets (เฉพาะ Admin)
   // ------------------------------------------------------------
   async function callSaveApi(dateStr, ph, tds) {
     try {
@@ -601,6 +900,11 @@
   // ฟังก์ชันบันทึกข้อมูล พร้อม Popup
   async function submitForm(event) {
     event.preventDefault();
+    if (!isAdmin) {
+      promptAdminPin();
+      return;
+    }
+
     const btn = document.getElementById('saveBtn');
     btn.disabled = true;
     btn.innerHTML = "กำลังบันทึก... ⏳";
@@ -645,13 +949,19 @@
     }
   }
 
-  // สลับหน้าจอ
+  // สลับหน้าจอ (หากเป็น Guest และพยายามเข้าหน้า mainSection ให้แจ้งเตือน PIN)
   function showSection(sectionId) {
+    if (sectionId === 'mainSection' && !isAdmin) {
+      promptAdminPin();
+      return;
+    }
     document.getElementById('mainSection').style.display = 'none';
     document.getElementById('historySection').style.display = 'none';
     document.getElementById('statsSection').style.display = 'none';
     document.getElementById(sectionId).style.display = 'block';
-    if (sectionId !== 'mainSection') loadData();
+    
+    if (sectionId === 'statsSection') updateChart();
+    if (sectionId === 'historySection') renderTable();
   }
 
   // โหลดข้อมูลประวัติสดจาก Google Sheets อัตโนมัติในเบื้องหลัง
@@ -865,9 +1175,14 @@
   }
 
   // ------------------------------------------------------------
-  // ระบบพิมพ์รายงานสถิติกราฟค่าน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
+  // ระบบพิมพ์รายงานสถิติกราฟค่าน้ำ (เฉพาะ Admin - เอกสารทางการใช้ฟอนต์ 'Sarabun')
   // ------------------------------------------------------------
   function printReport() {
+    if (!isAdmin) {
+      promptAdminPin();
+      return;
+    }
+
     const filter = document.getElementById('timeFilter').value;
     const filteredData = getFilteredData();
     
@@ -1031,9 +1346,14 @@
   }
 
   // ------------------------------------------------------------
-  // ระบบพิมพ์สมุดบันทึกประวัติคุณภาพน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
+  // ระบบพิมพ์สมุดบันทึกประวัติคุณภาพน้ำ (เฉพาะ Admin - เอกสารทางการใช้ฟอนต์ 'Sarabun')
   // ------------------------------------------------------------
   function printHistoryReport() {
+    if (!isAdmin) {
+      promptAdminPin();
+      return;
+    }
+
     const filter = document.getElementById('historyTimeFilter') ? document.getElementById('historyTimeFilter').value : 'all';
     const filteredData = getFilteredHistoryData();
     
@@ -1169,6 +1489,8 @@
   // เริ่มต้นตั้งค่าวันที่และโหลดข้อมูลอัตโนมัติในเบื้องหลัง
   window.addEventListener('DOMContentLoaded', () => {
     initDefaultDate();
+    updateRoleUI();
+    showSection('statsSection'); // เข้าแอปเป็น Guest แสดงกราฟสถิติในหน้าแรกเลย
     loadData();
   });
 </script>
