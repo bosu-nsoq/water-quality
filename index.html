@@ -1,0 +1,772 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <title>ระบบบันทึกคุณภาพน้ำ</title>
+  
+  <!-- PWA & Apple iOS Meta Tags -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#0a9396">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="default">
+  <meta name="apple-mobile-web-app-title" content="คุณภาพน้ำ">
+  <link rel="apple-touch-icon" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="192x192" href="icons/icon-192.png">
+  <link rel="apple-touch-icon" sizes="512x512" href="icons/icon-512.png">
+  <link rel="icon" type="image/svg+xml" href="icons/icon.svg">
+  <link rel="icon" type="image/png" sizes="192x192" href="icons/icon-192.png">
+
+  <!-- Bootstrap CSS -->
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <!-- SweetAlert2 สำหรับ Popup -->
+  <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+  <!-- เปลี่ยนฟอนต์เป็น Mali -->
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+  
+  <style>
+    body {
+      background: url('https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80') no-repeat center center fixed;
+      background-size: cover;
+      font-family: 'Mali', sans-serif;
+      color: #0b3d91;
+      min-height: 100vh;
+      padding-bottom: 30px;
+    }
+    
+    .main-wrapper {
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .glass-panel {
+      background: rgba(255, 255, 255, 0.88);
+      backdrop-filter: blur(10px);
+      -webkit-backdrop-filter: blur(10px);
+      border-radius: 20px;
+      padding: 25px 20px;
+      margin-top: 20px;
+      margin-bottom: 30px;
+      box-shadow: 0 8px 32px rgba(0, 50, 100, 0.2);
+      border: 1px solid rgba(255, 255, 255, 0.5);
+    }
+
+    /* Responsive Single-line Header */
+    h3, .app-title {
+      color: #005f73;
+      font-weight: 600;
+      text-align: center;
+      white-space: nowrap;
+      font-size: clamp(1.25rem, 5vw, 1.75rem);
+      margin-bottom: 0;
+    }
+
+    label { font-weight: 600; color: #0a9396; }
+    .form-control, .form-select { border-radius: 10px; border: 2px solid #94d2bd; font-family: 'Mali', sans-serif; }
+    .form-control:focus, .form-select:focus { border-color: #0a9396; box-shadow: 0 0 0 0.25rem rgba(10, 147, 150, 0.25); }
+    
+    .btn-custom { border-radius: 10px; font-weight: 600; padding: 10px; width: 100%; margin-bottom: 10px; transition: all 0.2s ease-in-out; }
+    .btn-save { background-color: #0a9396; color: white; border: none; }
+    .btn-save:hover { background-color: #005f73; color: white; }
+    .btn-history { background-color: #94d2bd; color: #003049; border: none; }
+    .btn-history:hover { background-color: #72ba9f; color: #003049; }
+    .btn-stats { background-color: #e9d8a6; color: #003049; border: none; }
+    .btn-stats:hover { background-color: #dfca8d; color: #003049; }
+    .btn-back { background-color: #ee9b00; color: white; border: none; }
+    .btn-back:hover { background-color: #ca8200; color: white; }
+
+    #historySection, #statsSection { display: none; }
+    .table { font-size: 0.85rem; background-color: white; border-radius: 10px; overflow: hidden; }
+    .table th { background-color: #0a9396; color: white; }
+    .badge-result { font-size: 0.8rem; padding: 5px 10px; border-radius: 15px; margin-top: 5px; }
+    
+    /* แจ้งเตือนภาพรวม */
+    #overallFeedback { font-size: 1.1rem; color: #003049; }
+
+    /* ปฏิทินแบบคลิกเลือกทันที ไม่มีไอคอนรก */
+    .date-picker-container {
+      position: relative;
+      width: 100%;
+    }
+    #recordDateDisplay {
+      cursor: pointer;
+      background-color: #ffffff;
+      text-align: center;
+      font-weight: 600;
+      color: #005f73;
+    }
+    #recordDate {
+      position: absolute;
+      inset: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+      z-index: 2;
+    }
+    #recordDate::-webkit-calendar-picker-indicator {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      opacity: 0;
+      cursor: pointer;
+    }
+
+    /* ปุ่มตั้งค่าชีต */
+    .btn-config {
+      font-size: 0.78rem;
+      border: 1px solid rgba(10, 147, 150, 0.4);
+      background: rgba(255, 255, 255, 0.8);
+      color: #005f73;
+      border-radius: 20px;
+      padding: 3px 12px;
+      transition: all 0.2s ease;
+    }
+    .btn-config:hover {
+      background: #94d2bd;
+      color: #003049;
+    }
+
+    .status-indicator {
+      display: inline-block;
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      margin-right: 5px;
+    }
+    .status-cloud { background-color: #2a9d8f; }
+    .status-local { background-color: #e76f51; }
+
+    /* SweetAlert Mali font */
+    .swal-font {
+      font-family: 'Mali', sans-serif !important;
+    }
+    .swal2-container {
+      font-family: 'Mali', sans-serif !important;
+    }
+  </style>
+</head>
+<body>
+
+<div class="container main-wrapper">
+  <!-- หน้าหลัก: บันทึกข้อมูล -->
+  <div class="glass-panel" id="mainSection">
+    <div class="d-flex justify-content-between align-items-center mb-2">
+      <div id="connStatusBadge" style="font-size: 0.75rem; color: #005f73;">
+        <span class="status-indicator status-local" id="statusDot"></span><span id="statusText">กำลังตรวจสอบการเชื่อมต่อ...</span>
+      </div>
+      <button type="button" class="btn btn-config" onclick="configureGasUrl()" title="ตั้งค่าเชื่อมต่อ Google Sheets">
+        ⚙️ ตั้งค่าเชื่อมต่อ
+      </button>
+    </div>
+
+    <h3 class="app-title">💧 บันทึกคุณภาพน้ำ</h3>
+    <hr>
+    
+    <form id="waterForm" onsubmit="submitForm(event)">
+      <!-- ช่องเลือกวันที่แบบ พ.ศ. (dd/mm/yyyy) คลิกเปิดปฏิทินทันที -->
+      <div class="mb-3">
+        <label>📅 วันที่บันทึก (พ.ศ.)</label>
+        <div class="date-picker-container">
+          <input type="text" class="form-control" id="recordDateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker()" title="คลิกเพื่อเลือกวันที่">
+          <input type="date" class="form-control" id="recordDate" onchange="onDateChange(this.value)" required>
+        </div>
+      </div>
+      
+      <div class="mb-3">
+        <label>🧪 ค่า pH (0-14)</label>
+        <!-- inputmode="decimal" ทำให้แป้นพิมพ์เป็น Numpad ทันที -->
+        <input type="number" class="form-control" id="phValue" step="0.01" min="0" max="14" placeholder="เช่น 7.2" inputmode="decimal" oninput="previewAll()" required>
+        <div id="phFeedback" class="mt-1"></div>
+      </div>
+      
+      <div class="mb-4">
+        <label>🔬 ค่า TDS (ppm)</label>
+        <!-- inputmode="decimal" ทำให้แป้นพิมพ์เป็น Numpad ทันที -->
+        <input type="number" class="form-control" id="tdsValue" step="0.01" min="0" placeholder="เช่น 250.5" inputmode="decimal" oninput="previewAll()" required>
+        <div id="tdsFeedback" class="mt-1"></div>
+      </div>
+      
+      <!-- ส่วนแสดงผลรวมอัตโนมัติ -->
+      <div id="overallFeedback" class="mb-3 text-center fw-bold"></div>
+      
+      <button type="submit" class="btn btn-custom btn-save" id="saveBtn">💾 บันทึกผล</button>
+    </form>
+    
+    <hr>
+    <div class="row">
+      <div class="col-6 pe-1">
+        <button class="btn btn-custom btn-history" onclick="showSection('historySection')">📜 ดูประวัติ</button>
+      </div>
+      <div class="col-6 ps-1">
+        <button class="btn btn-custom btn-stats" onclick="showSection('statsSection')">📊 ดูสถิติ</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- หน้า: ประวัติ -->
+  <div class="glass-panel" id="historySection">
+    <h3 class="app-title">📜 ประวัติย้อนหลัง</h3>
+    <button class="btn btn-custom btn-back mt-3 mb-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    <div class="table-responsive">
+      <table class="table table-bordered text-center align-middle">
+        <thead>
+          <tr>
+            <th width="33%">วันที่ (พ.ศ.)</th>
+            <th width="33%">pH</th>
+            <th width="34%">TDS</th>
+          </tr>
+        </thead>
+        <tbody id="historyTableBody">
+          <tr><td colspan="3">กำลังโหลดข้อมูล...</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- หน้า: สถิติ -->
+  <div class="glass-panel" id="statsSection">
+    <h3 class="app-title">📊 สถิติคุณภาพน้ำ</h3>
+    <button class="btn btn-custom btn-back mt-3 mb-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    
+    <select class="form-select mb-3" id="timeFilter" onchange="updateChart()">
+      <option value="all">ทั้งหมด</option>
+      <option value="week">สัปดาห์นี้</option>
+      <option value="month">เดือนนี้</option>
+      <option value="year">ปีนี้</option>
+    </select>
+
+    <canvas id="waterChart"></canvas>
+  </div>
+</div>
+
+<script>
+  // ============================================================
+  // การตั้งค่า Google Apps Script Web App URL
+  // หากยังไม่ได้ใส่ จะมีระบบ Local Database ให้ทดสอบใช้งานได้ทันทีบน GitHub Pages
+  // ============================================================
+  const DEFAULT_SCRIPT_URL = ""; 
+  let SCRIPT_URL = localStorage.getItem('WATER_QUALITY_GAS_URL') || DEFAULT_SCRIPT_URL;
+
+  let rawData = [];
+  let waterChartObj = null;
+
+  // ------------------------------------------------------------
+  // ระบบจัดการวันที่ตามมาตรฐานไทย พ.ศ. (dd/mm/yyyy)
+  // ------------------------------------------------------------
+  function openDatePicker() {
+    const el = document.getElementById('recordDate');
+    if (el) {
+      if (typeof el.showPicker === 'function') {
+        try { el.showPicker(); return; } catch(e) {}
+      }
+      el.focus();
+      el.click();
+    }
+  }
+
+  function formatBE(isoDateStr) {
+    if (!isoDateStr) return '';
+    const parts = isoDateStr.split('-');
+    if (parts.length === 3) {
+      let y = parseInt(parts[0], 10);
+      let yBE = y > 2400 ? y : y + 543;
+      let m = parts[1].padStart(2, '0');
+      let d = parts[2].padStart(2, '0');
+      return `${d}/${m}/${yBE}`;
+    }
+    return isoDateStr;
+  }
+
+  function onDateChange(val) {
+    const display = document.getElementById('recordDateDisplay');
+    if (!val) { if (display) display.value = ''; return; }
+    if (display) display.value = formatBE(val);
+  }
+
+  function initDefaultDate() {
+    const today = new Date();
+    const yyyy = today.getFullYear();
+    const mm = String(today.getMonth() + 1).padStart(2, '0');
+    const dd = String(today.getDate()).padStart(2, '0');
+    const isoToday = `${yyyy}-${mm}-${dd}`;
+    
+    const dateInput = document.getElementById('recordDate');
+    const dateDisplay = document.getElementById('recordDateDisplay');
+    if (dateInput) dateInput.value = isoToday;
+    if (dateDisplay) dateDisplay.value = formatBE(isoToday);
+  }
+
+  function parseThaiDate(dateStr) {
+    if (!dateStr) return new Date();
+    if (dateStr instanceof Date) return dateStr;
+    const str = String(dateStr).trim();
+    if (str.includes('/')) {
+      const parts = str.split('/');
+      const d = parseInt(parts[0], 10);
+      const m = parseInt(parts[1], 10) - 1;
+      let y = parseInt(parts[2], 10);
+      if (y > 2400) y -= 543;
+      return new Date(y, m, d);
+    } else if (str.includes('-')) {
+      const parts = str.split('T')[0].split('-');
+      let y = parseInt(parts[0], 10);
+      if (y > 2400) y -= 543;
+      const m = parseInt(parts[1], 10) - 1;
+      const d = parseInt(parts[2], 10);
+      return new Date(y, m, d);
+    }
+    const dObj = new Date(str);
+    return isNaN(dObj.getTime()) ? new Date() : dObj;
+  }
+
+  function formatDisplayDateBE(dateVal) {
+    if (!dateVal) return '';
+    const str = String(dateVal).trim();
+    if (str.includes('/')) {
+      const parts = str.split('/');
+      if (parts.length === 3) {
+        let d = parts[0].padStart(2, '0');
+        let m = parts[1].padStart(2, '0');
+        let y = parseInt(parts[2], 10);
+        if (y < 2400) y += 543;
+        return `${d}/${m}/${y}`;
+      }
+    } else if (str.includes('-')) {
+      const parts = str.split('T')[0].split('-');
+      if (parts.length === 3) {
+        let y = parseInt(parts[0], 10);
+        if (y < 2400) y += 543;
+        let m = parts[1].padStart(2, '0');
+        let d = parts[2].padStart(2, '0');
+        return `${d}/${m}/${y}`;
+      }
+    }
+    const dObj = parseThaiDate(dateVal);
+    const day = String(dObj.getDate()).padStart(2, '0');
+    const mon = String(dObj.getMonth() + 1).padStart(2, '0');
+    const yr = dObj.getFullYear() + 543;
+    return `${day}/${mon}/${yr}`;
+  }
+
+  // ------------------------------------------------------------
+  // สถานะการเชื่อมต่อ และการตั้งค่า GAS Web App URL
+  // ------------------------------------------------------------
+  function updateConnectionBadge() {
+    const dot = document.getElementById('statusDot');
+    const text = document.getElementById('statusText');
+    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
+      dot.className = "status-indicator status-cloud";
+      text.innerText = "เชื่อมต่อ Google Sheets";
+      text.style.color = "#005f73";
+    } else {
+      dot.className = "status-indicator status-local";
+      text.innerText = "โหมดบันทึกในเครื่อง (Local)";
+      text.style.color = "#bb3e03";
+    }
+  }
+
+  function configureGasUrl() {
+    Swal.fire({
+      title: '⚙️ ตั้งค่า Google Sheets',
+      html: `
+        <div style="text-align: left; font-size: 0.9rem;">
+          <p>วาง <b>URL เว็บแอป (Web App URL)</b> ที่ได้จากการ Deploy ใน Google Apps Script เพื่อบันทึกข้อมูลลง Google Sheet อัตโนมัติ:</p>
+          <input type="url" id="swalScriptUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" value="${SCRIPT_URL}">
+          <small class="text-muted d-block mt-2">💡 หากเว้นว่างไว้ ระบบจะสลับไปทำงานในโหมด Offline / LocalStorage ในเครื่องอัตโนมัติ</small>
+        </div>
+      `,
+      showCancelButton: true,
+      confirmButtonText: '💾 บันทึกการตั้งค่า',
+      cancelButtonText: 'ยกเลิก',
+      confirmButtonColor: '#0a9396',
+      customClass: { popup: 'swal-font' },
+      preConfirm: () => {
+        const val = document.getElementById('swalScriptUrl').value.trim();
+        return val;
+      }
+    }).then((result) => {
+      if (result.isConfirmed) {
+        SCRIPT_URL = result.value;
+        localStorage.setItem('WATER_QUALITY_GAS_URL', SCRIPT_URL);
+        updateConnectionBadge();
+        Swal.fire({
+          icon: 'success',
+          title: 'บันทึกเรียบร้อย!',
+          text: SCRIPT_URL ? 'ระบบจะเชื่อมต่อไปยัง Google Sheets อัตโนมัติ' : 'สลับมาใช้โหมด Local สำรองในเครื่อง',
+          confirmButtonColor: '#0a9396',
+          customClass: { popup: 'swal-font' }
+        });
+        loadData();
+      }
+    });
+  }
+
+  // ------------------------------------------------------------
+  // สร้างป้ายสีสำหรับการแปลผล (คงรูปแบบเดิม 100%)
+  // ------------------------------------------------------------
+  function getBadgeHTML(statusText) {
+    if (statusText === "ดี") return `<span class="badge bg-success badge-result">${statusText}</span>`;
+    if (statusText === "พอใช้") return `<span class="badge bg-warning text-dark badge-result">${statusText}</span>`;
+    return `<span class="badge bg-danger badge-result">${statusText}</span>`;
+  }
+
+  // ------------------------------------------------------------
+  // ฟังก์ชันแปลผลทั้งหมดแบบ Real-time (คงตรรกะเดิม 100%)
+  // ------------------------------------------------------------
+  function previewAll() {
+    let phVal = parseFloat(document.getElementById('phValue').value);
+    let tdsVal = parseFloat(document.getElementById('tdsValue').value);
+    
+    let phFb = document.getElementById('phFeedback');
+    let tdsFb = document.getElementById('tdsFeedback');
+    let overallFb = document.getElementById('overallFeedback');
+    
+    let phRes = "";
+    if (!isNaN(phVal)) {
+      if (phVal < 6.5) phRes = "ควรปรับปรุง";
+      else if (phVal < 6.9) phRes = "พอใช้";
+      else if (phVal < 7.6) phRes = "ดี";
+      else if (phVal <= 8.5) phRes = "พอใช้";
+      else phRes = "ควรปรับปรุง";
+      phFb.innerHTML = "แปลผล: " + getBadgeHTML(phRes);
+    } else { phFb.innerHTML = ""; }
+    
+    let tdsRes = "";
+    if (!isNaN(tdsVal)) {
+      if (tdsVal < 500) tdsRes = "ดี";
+      else if (tdsVal <= 1000) tdsRes = "พอใช้";
+      else tdsRes = "ควรปรับปรุง";
+      tdsFb.innerHTML = "แปลผล: " + getBadgeHTML(tdsRes);
+    } else { tdsFb.innerHTML = ""; }
+    
+    // แปลผลรวม
+    if (phRes && tdsRes) {
+      let overall = "";
+      if (phRes === "ควรปรับปรุง" || tdsRes === "ควรปรับปรุง") overall = "ควรปรับปรุง";
+      else if (phRes === "พอใช้" || tdsRes === "พอใช้") overall = "พอใช้";
+      else overall = "ดี";
+      overallFb.innerHTML = "🌟 ภาพรวมน้ำ: " + getBadgeHTML(overall);
+    } else { overallFb.innerHTML = ""; }
+  }
+
+  // ------------------------------------------------------------
+  // ฟังก์ชันคำนวณผลและบันทึก LocalStorage สำรอง
+  // ------------------------------------------------------------
+  function calculateResults(phNum, tdsNum) {
+    let phResult = "";
+    if (phNum < 6.5) phResult = "ควรปรับปรุง";
+    else if (phNum < 6.9) phResult = "พอใช้";
+    else if (phNum < 7.6) phResult = "ดี";
+    else if (phNum <= 8.5) phResult = "พอใช้";
+    else phResult = "ควรปรับปรุง";
+
+    let tdsResult = "";
+    if (tdsNum < 500) tdsResult = "ดี";
+    else if (tdsNum <= 1000) tdsResult = "พอใช้";
+    else tdsResult = "ควรปรับปรุง";
+
+    let overallResult = "";
+    if (phResult === "ควรปรับปรุง" || tdsResult === "ควรปรับปรุง") {
+      overallResult = "ควรปรับปรุง";
+    } else if (phResult === "พอใช้" || tdsResult === "พอใช้") {
+      overallResult = "พอใช้";
+    } else {
+      overallResult = "ดี";
+    }
+
+    return { phResult, tdsResult, overallResult };
+  }
+
+  function getFromLocalStorage() {
+    try {
+      const stored = localStorage.getItem('WATER_QUALITY_LOCAL_DATA');
+      if (stored) {
+        return JSON.parse(stored);
+      }
+    } catch (e) {}
+    return [];
+  }
+
+  function saveToLocalStorage(dateStr, ph, tds) {
+    const phNum = parseFloat(ph);
+    const tdsNum = parseFloat(tds);
+    const calc = calculateResults(phNum, tdsNum);
+    const current = getFromLocalStorage();
+    current.push([dateStr, phNum, calc.phResult, tdsNum, calc.tdsResult, calc.overallResult]);
+    current.sort((a, b) => parseThaiDate(a[0]).getTime() - parseThaiDate(b[0]).getTime());
+    localStorage.setItem('WATER_QUALITY_LOCAL_DATA', JSON.stringify(current));
+    
+    return {
+      ph: phNum,
+      phStatus: calc.phResult,
+      tds: tdsNum,
+      tdsStatus: calc.tdsResult,
+      overall: calc.overallResult
+    };
+  }
+
+  // ------------------------------------------------------------
+  // ฟังก์ชันบันทึกข้อมูล (รองรับทั้ง GAS Web API, Native GAS, และ Local)
+  // ------------------------------------------------------------
+  async function callSaveApi(dateStr, ph, tds) {
+    // 1. ถ้าทำงานใน Google Apps Script ดั้งเดิม
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      return new Promise((resolve, reject) => {
+        google.script.run
+          .withSuccessHandler(res => resolve(typeof res === 'string' ? JSON.parse(res) : res))
+          .withFailureHandler(err => reject(err))
+          .saveData(dateStr, ph, tds);
+      });
+    }
+
+    // 2. ถ้ามี Google Apps Script Web App URL
+    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
+      try {
+        // ส่งแบบ text/plain POST เพื่อข้าม CORS Preflight OPTIONS บน Google Apps Script
+        const response = await fetch(SCRIPT_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+          body: JSON.stringify({ action: 'saveData', date: dateStr, ph: ph, tds: tds })
+        });
+        const resJson = await response.json();
+        if (resJson.status === 'success') {
+          return resJson.data;
+        } else {
+          throw new Error(resJson.message || 'บันทึกข้อมูลไม่สำเร็จ');
+        }
+      } catch (err) {
+        // สำรองลองส่งด้วย GET ในกรณีเบราว์เซอร์ไม่อนุญาต redirect ของ POST
+        try {
+          const getUrl = `${SCRIPT_URL}?action=saveData&date=${encodeURIComponent(dateStr)}&ph=${encodeURIComponent(ph)}&tds=${encodeURIComponent(tds)}`;
+          const getRes = await fetch(getUrl);
+          const getJson = await getRes.json();
+          if (getJson.status === 'success') {
+            return getJson.data;
+          }
+        } catch (e) {
+          throw new Error('ไม่สามารถบันทึกไปยัง Google Sheets: ' + (err.message || err));
+        }
+      }
+    }
+
+    // 3. Fallback LocalStorage
+    return saveToLocalStorage(dateStr, ph, tds);
+  }
+
+  // ฟังก์ชันบันทึกข้อมูล พร้อม Popup (คงฟังก์ชันและหน้าตาเดิม 100%)
+  async function submitForm(event) {
+    event.preventDefault();
+    const btn = document.getElementById('saveBtn');
+    btn.disabled = true;
+    btn.innerHTML = "กำลังบันทึก... ⏳";
+
+    const rawDate = document.getElementById('recordDate').value;
+    const dateFormatted = formatBE(rawDate);
+    const ph = document.getElementById('phValue').value;
+    const tds = document.getElementById('tdsValue').value;
+
+    try {
+      const res = await callSaveApi(dateFormatted, ph, tds);
+
+      // Popup แสดงผลหลังจากบันทึกสำเร็จ (ใช้ฟอนต์ Mali ผ่าน CSS ภายนอก)
+      Swal.fire({
+        title: 'บันทึกสำเร็จ!',
+        html: `<b>สรุปคุณภาพน้ำ: ${getBadgeHTML(res.overall)}</b><br><br>
+               💧 ค่า pH: <b>${res.ph}</b> (${getBadgeHTML(res.phStatus)})<br>
+               🔬 ค่า TDS: <b>${res.tds}</b> ppm (${getBadgeHTML(res.tdsStatus)})`,
+        icon: 'success',
+        confirmButtonColor: '#0a9396',
+        customClass: { popup: 'swal-font' }
+      });
+
+      document.getElementById('waterForm').reset();
+      initDefaultDate();
+      document.getElementById('phFeedback').innerHTML = "";
+      document.getElementById('tdsFeedback').innerHTML = "";
+      document.getElementById('overallFeedback').innerHTML = "";
+      btn.disabled = false;
+      btn.innerHTML = "💾 บันทึกผล";
+      loadData();
+    } catch (err) {
+      console.error(err);
+      Swal.fire({
+        title: 'เกิดข้อผิดพลาด',
+        text: err.message || 'ไม่สามารถบันทึกข้อมูลได้',
+        icon: 'error',
+        confirmButtonColor: '#0a9396',
+        customClass: { popup: 'swal-font' }
+      });
+      btn.disabled = false;
+      btn.innerHTML = "💾 บันทึกผล";
+    }
+  }
+
+  // สลับหน้าจอ (คงโค้ดเดิม 100%)
+  function showSection(sectionId) {
+    document.getElementById('mainSection').style.display = 'none';
+    document.getElementById('historySection').style.display = 'none';
+    document.getElementById('statsSection').style.display = 'none';
+    document.getElementById(sectionId).style.display = 'block';
+    if(sectionId !== 'mainSection') loadData();
+  }
+
+  // โหลดข้อมูลประวัติ (รองรับทั้ง Google Apps Script, Web API, และ Local)
+  async function loadData() {
+    // 1. Native Google Apps Script
+    if (typeof google !== 'undefined' && google.script && google.script.run) {
+      google.script.run.withSuccessHandler(function(data) {
+        rawData = data;
+        renderTable();
+        updateChart();
+      }).getHistory();
+      return;
+    }
+
+    // 2. Google Apps Script Web App API
+    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
+      try {
+        const response = await fetch(`${SCRIPT_URL}?action=getHistory`);
+        const resJson = await response.json();
+        if (resJson.status === 'success') {
+          rawData = resJson.data || [];
+          renderTable();
+          updateChart();
+          return;
+        }
+      } catch (err) {
+        console.warn("GAS Web API fetch failed, fallback to local:", err);
+      }
+    }
+
+    // 3. LocalStorage Fallback
+    rawData = getFromLocalStorage();
+    renderTable();
+    updateChart();
+  }
+
+  // วาดตารางประวัติ (เพิ่มผลรวมไปไว้ใต้ช่องวันที่ และแสดงวันที่เป็น พ.ศ.)
+  function renderTable() {
+    let tbody = document.getElementById('historyTableBody');
+    tbody.innerHTML = '';
+    if(rawData.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3">ยังไม่มีข้อมูล</td></tr>';
+      return;
+    }
+    
+    let reverseData = [...rawData].reverse();
+    reverseData.forEach(row => {
+      // row[0]=วันที่, row[1]=pH, row[2]=ผลpH, row[3]=TDS, row[4]=ผลTDS, row[5]=ผลรวม
+      let dateDisplay = formatDisplayDateBE(row[0]);
+      let overallBadge = row[5] ? `<br>รวม: ${getBadgeHTML(row[5])}` : "";
+      let tr = document.createElement('tr');
+      tr.innerHTML = `
+        <td>${dateDisplay}${overallBadge}</td>
+        <td><b>${row[1]}</b><br>${getBadgeHTML(row[2])}</td>
+        <td><b>${row[3]}</b><br>${getBadgeHTML(row[4])}</td>
+      `;
+      tbody.appendChild(tr);
+    });
+  }
+
+  // คัดกรองและสร้างกราฟ (รองรับการกรองวันที่ทั้ง พ.ศ. และ ค.ศ.)
+  function updateChart() {
+    const filter = document.getElementById('timeFilter').value;
+    const today = new Date();
+    
+    let filteredData = rawData.filter(row => {
+      if (filter === 'all') return true;
+      let rowDate = parseThaiDate(row[0]);
+      if (isNaN(rowDate.getTime())) return true;
+      if (filter === 'year') return rowDate.getFullYear() === today.getFullYear();
+      if (filter === 'month') return rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear();
+      if (filter === 'week') {
+        let diff = Math.round((today - rowDate) / (1000 * 60 * 60 * 24));
+        return diff >= 0 && diff <= 7;
+      }
+      return true;
+    });
+
+    const labels = filteredData.map(row => formatDisplayDateBE(row[0]));
+    const phData = filteredData.map(row => row[1]);
+    const tdsData = filteredData.map(row => row[3]);
+
+    drawChart(labels, phData, tdsData);
+  }
+
+  // วาดกราฟให้อ่านง่ายขึ้น (เส้นหนาขึ้น จุดใหญ่ขึ้น ฟอนต์กราฟเป็น Mali - คงเดิม 100%)
+  function drawChart(labels, phData, tdsData) {
+    const ctx = document.getElementById('waterChart').getContext('2d');
+    if (waterChartObj) waterChartObj.destroy();
+
+    waterChartObj = new Chart(ctx, {
+      type: 'line',
+      data: {
+        labels: labels,
+        datasets: [
+          {
+            label: 'ค่า pH', data: phData,
+            borderColor: '#0a9396', backgroundColor: '#0a9396',
+            yAxisID: 'y', tension: 0.3, pointRadius: 6, borderWidth: 3 // จุดใหญ่ขึ้น เส้นหนาขึ้น
+          },
+          {
+            label: 'ค่า TDS (ppm)', data: tdsData,
+            borderColor: '#bb3e03', backgroundColor: '#bb3e03',
+            yAxisID: 'y1', tension: 0.3, pointRadius: 6, borderWidth: 3 // จุดใหญ่ขึ้น เส้นหนาขึ้น
+          }
+        ]
+      },
+      options: {
+        responsive: true,
+        interaction: { mode: 'index', intersect: false },
+        plugins: {
+          legend: { labels: { font: { family: 'Mali', size: 14 } } },
+          tooltip: {
+            titleFont: { family: 'Mali', size: 14 },
+            bodyFont: { family: 'Mali', size: 14 },
+            padding: 10
+          }
+        },
+        scales: {
+          x: {
+            ticks: { font: { family: 'Mali' } }
+          },
+          y: {
+            type: 'linear', display: true, position: 'left',
+            title: { display: true, text: 'pH (0-14)', font: { family: 'Mali' } },
+            min: 0, max: 14,
+            ticks: { font: { family: 'Mali' } }
+          },
+          y1: {
+            type: 'linear', display: true, position: 'right',
+            title: { display: true, text: 'TDS (ppm)', font: { family: 'Mali' } },
+            grid: { drawOnChartArea: false },
+            ticks: { font: { family: 'Mali' } }
+          }
+        }
+      }
+    });
+  }
+
+  // ลงทะเบียน Service Worker สำหรับ PWA
+  if ('serviceWorker' in navigator) {
+    window.addEventListener('load', () => {
+      navigator.serviceWorker.register('./sw.js')
+        .then(() => console.log('PWA Service Worker registered'))
+        .catch(err => console.log('Service Worker registration skipped:', err));
+    });
+  }
+
+  // เริ่มต้นตั้งค่าวันที่และโหลดข้อมูล
+  window.addEventListener('DOMContentLoaded', () => {
+    initDefaultDate();
+    updateConnectionBadge();
+  });
+</script>
+
+</body>
+</html>
