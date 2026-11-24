@@ -257,6 +257,94 @@
       display: none !important;
     }
 
+    /* ------------------------------------------------------------ */
+    /* หน้าโหลดข้อมูลน่ารักๆ (Cute Loader) */
+    /* ------------------------------------------------------------ */
+    .cute-loader-overlay {
+      position: fixed;
+      inset: 0;
+      background: rgba(240, 249, 255, 0.92);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      z-index: 99999;
+      transition: opacity 0.4s ease, visibility 0.4s ease;
+    }
+
+    .cute-loader-overlay.fade-out {
+      opacity: 0;
+      visibility: hidden;
+      pointer-events: none;
+    }
+
+    .cute-loader-card {
+      background: rgba(255, 255, 255, 0.96);
+      padding: 26px 32px;
+      border-radius: 24px;
+      box-shadow: 0 12px 35px rgba(0, 95, 115, 0.18);
+      border: 2px solid var(--accent);
+      text-align: center;
+      max-width: 300px;
+      width: 82%;
+    }
+
+    .water-drop-animation {
+      font-size: 52px;
+      display: inline-block;
+      animation: bounceWater 1.2s infinite ease-in-out;
+      margin-bottom: 8px;
+      filter: drop-shadow(0 6px 12px rgba(10, 147, 150, 0.3));
+    }
+
+    @keyframes bounceWater {
+      0%, 100% {
+        transform: translateY(0) scale(1);
+      }
+      50% {
+        transform: translateY(-15px) scale(1.1);
+      }
+    }
+
+    .cute-loader-text {
+      font-family: 'Mali', sans-serif;
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--primary-dark);
+      margin-bottom: 3px;
+    }
+
+    .cute-loader-subtext {
+      font-family: 'Mali', sans-serif;
+      font-size: 0.88rem;
+      color: var(--primary);
+      margin-bottom: 12px;
+    }
+
+    .cute-spinner-dots {
+      display: flex;
+      justify-content: center;
+      gap: 6px;
+    }
+
+    .cute-spinner-dots span {
+      width: 9px;
+      height: 9px;
+      background-color: var(--primary);
+      border-radius: 50%;
+      display: inline-block;
+      animation: dotPulse 1.4s infinite ease-in-out both;
+    }
+
+    .cute-spinner-dots span:nth-child(1) { animation-delay: -0.32s; }
+    .cute-spinner-dots span:nth-child(2) { animation-delay: -0.16s; }
+
+    @keyframes dotPulse {
+      0%, 80%, 100% { transform: scale(0); opacity: 0.3; }
+      40% { transform: scale(1); opacity: 1; }
+    }
+
     /* SweetAlert Mali font */
     .swal-font {
       font-family: 'Mali', sans-serif !important;
@@ -320,6 +408,18 @@
   </style>
 </head>
 <body>
+
+<!-- หน้าโหลดข้อมูลน่ารักๆ "กำลังโหลด" ก่อนแสดงข้อมูลปัจจุบัน -->
+<div id="cuteLoader" class="cute-loader-overlay">
+  <div class="cute-loader-card">
+    <div class="water-drop-animation">💧</div>
+    <div class="cute-loader-text">กำลังโหลด...</div>
+    <div class="cute-loader-subtext">ระบบบันทึกคุณภาพน้ำ 🌊</div>
+    <div class="cute-spinner-dots">
+      <span></span><span></span><span></span>
+    </div>
+  </div>
+</div>
 
 <div class="container main-wrapper">
   <!-- แถบสถานะผู้ใช้งาน (Guest / Admin) พร้อมปุ่มใส่ PIN เข้าสู่ระบบ -->
@@ -517,7 +617,12 @@
   // ระบบจัดการสิทธิ์ Guest vs Admin (PIN 4 หลัก)
   // ------------------------------------------------------------
   function getAdminPin() {
-    return localStorage.getItem('WATER_ADMIN_PIN') || '1234';
+    const saved = localStorage.getItem('WATER_ADMIN_PIN');
+    if (!saved || saved === '1234') {
+      localStorage.setItem('WATER_ADMIN_PIN', '8055');
+      return '8055';
+    }
+    return saved;
   }
 
   function handleAuthClick() {
@@ -537,49 +642,41 @@
         <div style="font-family: 'Mali', sans-serif; text-align: center;">
           <p style="font-size: 0.92rem; color: #555; margin-bottom: 12px;">กรุณากรอกรหัส PIN 4 หลักเพื่อเข้าสู่ระบบผู้ดูแล:</p>
           <input type="password" id="adminPinInput" class="form-control text-center mx-auto" 
-                 inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" 
-                 style="font-size: 28px; letter-spacing: 12px; font-weight: bold; width: 170px; border-radius: 12px; height: 50px;">
-          <small class="text-muted d-block mt-2" style="font-size: 0.78rem;">(รหัสเริ่มต้น: 1234)</small>
+                 inputmode="numeric" pattern="[0-9]*" maxlength="4" placeholder="••••" autofocus
+                 style="font-size: 32px; letter-spacing: 12px; font-weight: bold; width: 170px; border-radius: 12px; height: 52px; border: 2px solid #0a9396;">
+          <small class="text-muted d-block mt-2" style="font-size: 0.78rem;">(พิมพ์ครบ 4 หลัก เข้าสู่ระบบอัตโนมัติ)</small>
         </div>
       `,
+      showConfirmButton: false, // เข้าใช้งานได้ทันที ไม่ต้องกดปุ่มยืนยัน
       showCancelButton: true,
-      confirmButtonText: 'ยืนยัน',
       cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#0a9396',
       cancelButtonColor: '#aaa',
       customClass: { popup: 'swal-font' },
       didOpen: () => {
         const input = document.getElementById('adminPinInput');
         if (input) {
           input.focus();
-          input.addEventListener('keyup', (e) => {
-            if (e.key === 'Enter') Swal.clickConfirm();
+          input.addEventListener('input', () => {
+            const val = input.value.trim();
+            if (val.length === 4) {
+              if (val === currentPin) {
+                Swal.close();
+                setAdminMode(true);
+                Swal.fire({
+                  icon: 'success',
+                  title: 'เข้าสู่ระบบ Admin สำเร็จ!',
+                  text: 'ปลดล็อกสิทธิ์บันทึกข้อมูลและสั่งพิมพ์รายงานเรียบร้อยแล้ว',
+                  timer: 1400,
+                  showConfirmButton: false,
+                  customClass: { popup: 'swal-font' }
+                });
+              } else {
+                input.value = '';
+                Swal.showValidationMessage('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
+              }
+            }
           });
         }
-      },
-      preConfirm: () => {
-        const entered = document.getElementById('adminPinInput').value;
-        if (!entered || entered.length !== 4) {
-          Swal.showValidationMessage('กรุณากรอกรหัส PIN 4 หลักให้ครบถ้วน');
-          return false;
-        }
-        if (entered !== currentPin) {
-          Swal.showValidationMessage('รหัส PIN ไม่ถูกต้อง กรุณาลองใหม่อีกครั้ง');
-          return false;
-        }
-        return true;
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        setAdminMode(true);
-        Swal.fire({
-          icon: 'success',
-          title: 'เข้าสู่ระบบ Admin สำเร็จ!',
-          text: 'ปลดล็อกสิทธิ์บันทึกข้อมูลและสั่งพิมพ์รายงานเรียบร้อยแล้ว',
-          timer: 1600,
-          showConfirmButton: false,
-          customClass: { popup: 'swal-font' }
-        });
       }
     });
   }
@@ -964,6 +1061,17 @@
     if (sectionId === 'historySection') renderTable();
   }
 
+  // ฟังก์ชันซ่อนหน้าจอโหลดข้อมูล
+  function hideLoader() {
+    const loader = document.getElementById('cuteLoader');
+    if (loader && !loader.classList.contains('fade-out')) {
+      loader.classList.add('fade-out');
+      setTimeout(() => {
+        loader.style.display = 'none';
+      }, 400);
+    }
+  }
+
   // โหลดข้อมูลประวัติสดจาก Google Sheets อัตโนมัติในเบื้องหลัง
   async function loadData() {
     try {
@@ -976,6 +1084,8 @@
       }
     } catch (err) {
       console.warn("Auto sync background fetch:", err);
+    } finally {
+      hideLoader(); // ซ่อนหน้าโหลดข้อมูลน่ารักๆ เมื่อข้อมูลโหลดเสร็จ
     }
   }
 
@@ -1492,6 +1602,7 @@
     updateRoleUI();
     showSection('statsSection'); // เข้าแอปเป็น Guest แสดงกราฟสถิติในหน้าแรกเลย
     loadData();
+    setTimeout(hideLoader, 2500); // สำรองเวลาสูงสุด 2.5 วินาที
   });
 </script>
 
