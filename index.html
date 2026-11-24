@@ -278,10 +278,48 @@
     </div>
   </div>
 
-  <!-- หน้า: ประวัติ -->
+  <!-- หน้า: ประวัติและพิมพ์ประวัติ -->
   <div class="glass-panel" id="historySection">
     <h3 class="app-title">📜 ประวัติย้อนหลัง</h3>
     <button class="btn btn-custom btn-back my-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    
+    <!-- ตัวเลือกช่วงเวลาของหน้าประวัติ -->
+    <div class="mb-3">
+      <label>📅 เลือกช่วงเวลาประวัติ:</label>
+      <select class="form-select mb-2" id="historyTimeFilter" onchange="onHistoryFilterChange()">
+        <option value="all">ทั้งหมด</option>
+        <option value="week">สัปดาห์นี้ (7 วันล่าสุด)</option>
+        <option value="month">เดือนนี้</option>
+        <option value="year">ปีนี้</option>
+        <option value="custom">กำหนดช่วงวันที่เอง...</option>
+      </select>
+
+      <div id="historyCustomDateBox" style="display: none;" class="mb-2">
+        <div class="row g-2">
+          <div class="col-6">
+            <label style="font-size: 0.85rem;">ตั้งแต่วันที่:</label>
+            <div class="date-picker-container">
+              <input type="text" class="form-control date-display-input" id="histStartDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('histStart')">
+              <input type="date" class="form-control date-raw-input" id="histStart" onchange="onDateChange('histStart', 'histStartDisplay', this.value); renderTable();">
+            </div>
+          </div>
+          <div class="col-6">
+            <label style="font-size: 0.85rem;">ถึงวันที่:</label>
+            <div class="date-picker-container">
+              <input type="text" class="form-control date-display-input" id="histEndDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('histEnd')">
+              <input type="date" class="form-control date-raw-input" id="histEnd" onchange="onDateChange('histEnd', 'histEndDisplay', this.value); renderTable();">
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- ปุ่มพิมพ์ประวัติคุณภาพน้ำ -->
+      <button type="button" class="btn btn-custom btn-print mb-3" onclick="printHistoryReport()">
+        🖨️ พิมพ์ประวัติคุณภาพน้ำ
+      </button>
+    </div>
+
+    <!-- ตารางแสดงประวัติ -->
     <div class="table-responsive">
       <table class="table table-bordered text-center align-middle mb-0">
         <thead>
@@ -401,12 +439,6 @@
     if (dateInput) dateInput.value = isoToday;
     if (dateDisplay) dateDisplay.value = formatBE(isoToday);
 
-    // กำหนดค่าเริ่มต้นช่วงวันที่กำหนดเอง
-    const customEnd = document.getElementById('customEnd');
-    const customEndDisplay = document.getElementById('customEndDisplay');
-    if (customEnd) customEnd.value = isoToday;
-    if (customEndDisplay) customEndDisplay.value = formatBE(isoToday);
-
     // ย้อนหลัง 30 วันสำหรับเริ่มต้น
     const past30 = new Date();
     past30.setDate(past30.getDate() - 30);
@@ -414,10 +446,28 @@
     const pastM = String(past30.getMonth() + 1).padStart(2, '0');
     const pastD = String(past30.getDate()).padStart(2, '0');
     const isoPast = `${pastY}-${pastM}-${pastD}`;
+
+    // กำหนดค่าเริ่มต้นช่วงวันที่หน้าสถิติ
+    const customEnd = document.getElementById('customEnd');
+    const customEndDisplay = document.getElementById('customEndDisplay');
+    if (customEnd) customEnd.value = isoToday;
+    if (customEndDisplay) customEndDisplay.value = formatBE(isoToday);
+
     const customStart = document.getElementById('customStart');
     const customStartDisplay = document.getElementById('customStartDisplay');
     if (customStart) customStart.value = isoPast;
     if (customStartDisplay) customStartDisplay.value = formatBE(isoPast);
+
+    // กำหนดค่าเริ่มต้นช่วงวันที่หน้าประวัติ
+    const histEnd = document.getElementById('histEnd');
+    const histEndDisplay = document.getElementById('histEndDisplay');
+    if (histEnd) histEnd.value = isoToday;
+    if (histEndDisplay) histEndDisplay.value = formatBE(isoToday);
+
+    const histStart = document.getElementById('histStart');
+    const histStartDisplay = document.getElementById('histStartDisplay');
+    if (histStart) histStart.value = isoPast;
+    if (histStartDisplay) histStartDisplay.value = formatBE(isoPast);
   }
 
   function parseThaiDate(dateStr) {
@@ -513,15 +563,11 @@
     // แปลผลรวม
     if (phRes && tdsRes) {
       let overall = "";
-      if (phRes === "ควรปรับปรุง" || tdsResultIsPoor(phRes, tdsRes)) overall = "ควรปรับปรุง";
+      if (phRes === "ควรปรับปรุง" || tdsRes === "ควรปรับปรุง") overall = "ควรปรับปรุง";
       else if (phRes === "พอใช้" || tdsRes === "พอใช้") overall = "พอใช้";
       else overall = "ดี";
       overallFb.innerHTML = "🌟 ภาพรวมน้ำ: " + getBadgeHTML(overall);
     } else { overallFb.innerHTML = ""; }
-  }
-
-  function tdsResultIsPoor(phRes, tdsRes) {
-    return (phRes === "ควรปรับปรุง" || tdsRes === "ควรปรับปรุง");
   }
 
   // ------------------------------------------------------------
@@ -539,7 +585,6 @@
         return resJson.data;
       }
     } catch (err) {
-      // ลองส่งด้วย GET สำรองในกรณีที่เบราว์เซอร์ติด Redirect
       const getUrl = `${SCRIPT_URL}?action=saveData&date=${encodeURIComponent(dateStr)}&ph=${encodeURIComponent(ph)}&tds=${encodeURIComponent(tds)}`;
       const getRes = await fetch(getUrl);
       const getJson = await getRes.json();
@@ -621,16 +666,64 @@
     }
   }
 
+  // ------------------------------------------------------------
+  // คัดกรองข้อมูลหน้าประวัติ
+  // ------------------------------------------------------------
+  function onHistoryFilterChange() {
+    const filter = document.getElementById('historyTimeFilter').value;
+    const box = document.getElementById('historyCustomDateBox');
+    if (box) {
+      box.style.display = (filter === 'custom') ? 'block' : 'none';
+    }
+    renderTable();
+  }
+
+  function getFilteredHistoryData() {
+    const filter = document.getElementById('historyTimeFilter') ? document.getElementById('historyTimeFilter').value : 'all';
+    const today = new Date();
+    today.setHours(23, 59, 59, 999);
+    
+    return rawData.filter(row => {
+      if (filter === 'all') return true;
+      let rowDate = parseThaiDate(row[0]);
+      if (isNaN(rowDate.getTime())) return true;
+      
+      if (filter === 'year') {
+        return rowDate.getFullYear() === today.getFullYear();
+      }
+      if (filter === 'month') {
+        return rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear();
+      }
+      if (filter === 'week') {
+        let diffTime = today.getTime() - rowDate.getTime();
+        let diffDays = diffTime / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= 7;
+      }
+      if (filter === 'custom') {
+        const sRaw = document.getElementById('histStart') ? document.getElementById('histStart').value : '';
+        const eRaw = document.getElementById('histEnd') ? document.getElementById('histEnd').value : '';
+        if (!sRaw && !eRaw) return true;
+        let sDate = sRaw ? new Date(sRaw) : new Date(0);
+        sDate.setHours(0, 0, 0, 0);
+        let eDate = eRaw ? new Date(eRaw) : new Date(8640000000000000);
+        eDate.setHours(23, 59, 59, 999);
+        return rowDate >= sDate && rowDate <= eDate;
+      }
+      return true;
+    });
+  }
+
   // วาดตารางประวัติ
   function renderTable() {
     let tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
-    if (rawData.length === 0) {
-      tbody.innerHTML = '<tr><td colspan="3">ยังไม่มีข้อมูล</td></tr>';
+    const filtered = getFilteredHistoryData();
+    if (filtered.length === 0) {
+      tbody.innerHTML = '<tr><td colspan="3">ไม่พบข้อมูลตามช่วงเวลาที่เลือก</td></tr>';
       return;
     }
     
-    let reverseData = [...rawData].reverse();
+    let reverseData = [...filtered].reverse();
     reverseData.forEach(row => {
       let dateDisplay = formatDisplayDateBE(row[0]);
       let overallBadge = row[5] ? `<br>รวม: ${getBadgeHTML(row[5])}` : "";
@@ -645,7 +738,7 @@
   }
 
   // ------------------------------------------------------------
-  // ระบบคัดกรองข้อมูลตามช่วงเวลา (ทั้งหมด, สัปดาห์นี้, เดือนนี้, ปีนี้, กำหนดเอง)
+  // ระบบคัดกรองข้อมูลหน้าสถิติ (ทั้งหมด, สัปดาห์นี้, เดือนนี้, ปีนี้, กำหนดเอง)
   // ------------------------------------------------------------
   function onTimeFilterChange() {
     const filter = document.getElementById('timeFilter').value;
@@ -769,7 +862,7 @@
   }
 
   // ------------------------------------------------------------
-  // ระบบพิมพ์รายงานกราฟค่าน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
+  // ระบบพิมพ์รายงานสถิติกราฟค่าน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
   // ------------------------------------------------------------
   function printReport() {
     const filter = document.getElementById('timeFilter').value;
@@ -843,13 +936,11 @@
     const printContainer = document.getElementById('printReportContainer');
     printContainer.innerHTML = `
       <div style="font-family: 'Sarabun', sans-serif; color: #111; line-height: 1.5; padding: 10px 0;">
-        <!-- หัวเอกสารรายงาน -->
         <div style="text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 10px; margin-bottom: 16px;">
           <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #005f73;">รายงานผลการตรวจวัดและสถิติคุณภาพน้ำ</h2>
           <p style="margin: 4px 0 0 0; font-size: 14px; color: #555;">Water Quality Monitoring and Assessment Report</p>
         </div>
 
-        <!-- ข้อมูลหัวรายงาน -->
         <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 8px;">
           <div><b>ช่วงเวลาที่รายงาน:</b> ${rangeText}</div>
           <div><b>วันที่พิมพ์เอกสาร:</b> ${printDateStr}</div>
@@ -933,6 +1024,133 @@
     `;
 
     // 7. สั่งพิมพ์ทันที
+    window.print();
+  }
+
+  // ------------------------------------------------------------
+  // ระบบพิมพ์สมุดบันทึกประวัติคุณภาพน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
+  // ------------------------------------------------------------
+  function printHistoryReport() {
+    const filter = document.getElementById('historyTimeFilter') ? document.getElementById('historyTimeFilter').value : 'all';
+    const filteredData = getFilteredHistoryData();
+    
+    if (!filteredData || filteredData.length === 0) {
+      Swal.fire({
+        title: 'ไม่พบข้อมูล',
+        text: 'ไม่มีข้อมูลประวัติในช่วงเวลาที่ท่านเลือกสำหรับการพิมพ์',
+        icon: 'info',
+        confirmButtonColor: '#0a9396',
+        customClass: { popup: 'swal-font' }
+      });
+      return;
+    }
+
+    // 1. ระบุข้อความช่วงเวลา
+    let rangeText = "";
+    if (filter === 'all') rangeText = "ข้อมูลทั้งหมด";
+    else if (filter === 'week') rangeText = "สัปดาห์นี้ (7 วันล่าสุด)";
+    else if (filter === 'month') rangeText = "ประจำเดือนนี้";
+    else if (filter === 'year') rangeText = "ประจำปีนี้";
+    else if (filter === 'custom') {
+      const sDate = document.getElementById('histStartDisplay').value || "-";
+      const eDate = document.getElementById('histEndDisplay').value || "-";
+      rangeText = `ระหว่างวันที่ ${sDate} ถึง ${eDate}`;
+    }
+
+    // 2. คำนวณสรุปผล
+    const count = filteredData.length;
+    let goodCount = 0;
+    let fairCount = 0;
+    let poorCount = 0;
+    filteredData.forEach(r => {
+      const ov = r[5] || "";
+      if (ov === "ดี") goodCount++;
+      else if (ov === "พอใช้") fairCount++;
+      else if (ov === "ควรปรับปรุง") poorCount++;
+    });
+
+    // 3. วันที่พิมพ์เอกสาร (พ.ศ.)
+    const now = new Date();
+    const dayStr = String(now.getDate()).padStart(2, '0');
+    const monthNamesThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    const printDateStr = `${dayStr} ${monthNamesThai[now.getMonth()]} พ.ศ. ${now.getFullYear() + 543} เวลา ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+
+    // 4. สร้างแถวตารางข้อมูล
+    let rowsHtml = "";
+    filteredData.forEach((r, idx) => {
+      rowsHtml += `
+        <tr>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${idx + 1}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${formatDisplayDateBE(r[0])}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[1]}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[2] || "-"}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[3]}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[4] || "-"}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center; font-weight: bold;">${r[5] || "-"}</td>
+        </tr>
+      `;
+    });
+
+    // 5. ประกอบเนื้อหาลงใน #printReportContainer ด้วยฟอนต์ Sarabun
+    const printContainer = document.getElementById('printReportContainer');
+    printContainer.innerHTML = `
+      <div style="font-family: 'Sarabun', sans-serif; color: #111; line-height: 1.5; padding: 10px 0;">
+        <div style="text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 10px; margin-bottom: 16px;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #005f73;">สมุดบันทึกประวัติการตรวจวัดคุณภาพน้ำ</h2>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #555;">Water Quality Measurement History Log</p>
+        </div>
+
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 8px;">
+          <div><b>ช่วงเวลาที่รายงาน:</b> ${rangeText}</div>
+          <div><b>วันที่พิมพ์เอกสาร:</b> ${printDateStr}</div>
+        </div>
+
+        <!-- สรุปผลภาพรวม -->
+        <div style="display: flex; justify-content: space-around; background: #e6f2f2; border: 1px solid #bbb; border-radius: 8px; padding: 10px; margin-bottom: 20px; font-size: 13.5px; text-align: center;">
+          <div><b>จำนวนการบันทึกทั้งหมด:</b> <span style="color: #005f73; font-weight: bold;">${count}</span> รายการ</div>
+          <div><b>ผลประเมินดี:</b> <span style="color: #2a9d8f; font-weight: bold;">${goodCount}</span> ครั้ง</div>
+          <div><b>ผลประเมินพอใช้:</b> <span style="color: #e76f51; font-weight: bold;">${fairCount}</span> ครั้ง</div>
+          <div><b>ควรปรับปรุง:</b> <span style="color: #d90429; font-weight: bold;">${poorCount}</span> ครั้ง</div>
+        </div>
+
+        <!-- ตารางข้อมูลประวัติ -->
+        <div style="margin-bottom: 25px;">
+          <div style="font-size: 15px; font-weight: 600; color: #005f73; margin-bottom: 8px;">📝 รายการประวัติการตรวจวัดคุณภาพน้ำ</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead>
+              <tr style="background-color: #f2f2f2; text-align: center;">
+                <th style="border: 1px solid #444; padding: 6px; width: 45px;">ลำดับ</th>
+                <th style="border: 1px solid #444; padding: 6px;">วันที่บันทึก (พ.ศ.)</th>
+                <th style="border: 1px solid #444; padding: 6px;">ค่า pH</th>
+                <th style="border: 1px solid #444; padding: 6px;">แปลผล pH</th>
+                <th style="border: 1px solid #444; padding: 6px;">ค่า TDS (ppm)</th>
+                <th style="border: 1px solid #444; padding: 6px;">แปลผล TDS</th>
+                <th style="border: 1px solid #444; padding: 6px;">ภาพรวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ส่วนลงนาม -->
+        <div style="display: flex; justify-content: space-between; margin-top: 40px; font-size: 13.5px; page-break-inside: avoid;">
+          <div style="text-align: center; width: 45%;">
+            <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+            <p style="margin: 0;">( ................................................................ )</p>
+            <p style="margin: 4px 0 0 0; color: #555;">ผู้บันทึกข้อมูล/เจ้าหน้าที่</p>
+          </div>
+          <div style="text-align: center; width: 45%;">
+            <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+            <p style="margin: 0;">( ................................................................ )</p>
+            <p style="margin: 4px 0 0 0; color: #555;">ผู้รับรอง/หัวหน้างาน</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 6. สั่งพิมพ์ทันที
     window.print();
   }
 
