@@ -2,7 +2,7 @@
 <html lang="th">
 <head>
   <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
   <title>ระบบบันทึกคุณภาพน้ำ</title>
   
   <!-- PWA & Apple iOS Meta Tags -->
@@ -23,81 +23,125 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <!-- SweetAlert2 สำหรับ Popup -->
   <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-  <!-- เปลี่ยนฟอนต์เป็น Mali -->
-  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600&display=swap" rel="stylesheet">
+  <!-- Google Fonts: Mali (สำหรับหน้าจอทั่วไป) และ Sarabun (สำหรับเอกสารพิมพ์รายงานทางการ) -->
+  <link href="https://fonts.googleapis.com/css2?family=Mali:wght@300;400;600;700&family=Sarabun:wght@400;500;600;700&display=swap" rel="stylesheet">
   
   <style>
+    :root {
+      --primary: #0a9396;
+      --primary-dark: #005f73;
+      --accent: #94d2bd;
+      --text-main: #003049;
+    }
+
+    * {
+      box-sizing: border-box;
+      -webkit-tap-highlight-color: transparent;
+    }
+
     body {
       background: url('https://images.unsplash.com/photo-1437482078695-73f5ca6c96e2?ixlib=rb-4.0.3&auto=format&fit=crop&w=1080&q=80') no-repeat center center fixed;
       background-size: cover;
       font-family: 'Mali', sans-serif;
       color: #0b3d91;
       min-height: 100vh;
-      padding-bottom: 30px;
+      margin: 0;
+      padding: max(12px, env(safe-area-inset-top, 12px)) 12px max(24px, env(safe-area-inset-bottom, 24px)) 12px;
     }
     
     .main-wrapper {
-      max-width: 600px;
+      max-width: 540px;
       margin: 0 auto;
+      width: 100%;
     }
 
     .glass-panel {
       background: rgba(255, 255, 255, 0.88);
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
       border-radius: 20px;
-      padding: 25px 20px;
-      margin-top: 20px;
-      margin-bottom: 30px;
+      padding: 24px 20px;
+      margin-top: 10px;
+      margin-bottom: 24px;
       box-shadow: 0 8px 32px rgba(0, 50, 100, 0.2);
       border: 1px solid rgba(255, 255, 255, 0.5);
     }
 
-    /* Responsive Single-line Header */
-    h3, .app-title {
-      color: #005f73;
+    /* Responsive Single-line Header สำหรับมือถือแนวตั้ง */
+    .app-title {
+      color: var(--primary-dark);
       font-weight: 600;
       text-align: center;
       white-space: nowrap;
-      font-size: clamp(1.25rem, 5vw, 1.75rem);
+      font-size: clamp(1.25rem, 5.2vw, 1.7rem);
+      line-height: 1.3;
       margin-bottom: 0;
     }
 
-    label { font-weight: 600; color: #0a9396; }
-    .form-control, .form-select { border-radius: 10px; border: 2px solid #94d2bd; font-family: 'Mali', sans-serif; }
-    .form-control:focus, .form-select:focus { border-color: #0a9396; box-shadow: 0 0 0 0.25rem rgba(10, 147, 150, 0.25); }
+    label { 
+      font-weight: 600; 
+      color: var(--primary); 
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .form-control, .form-select { 
+      border-radius: 12px; 
+      border: 2px solid var(--accent); 
+      font-family: 'Mali', sans-serif;
+      font-size: 16px; /* ป้องกัน iOS ซูมหน้าจอเมื่อแตะช่องพิมพ์ */
+      min-height: 46px;
+    }
+    .form-control:focus, .form-select:focus { 
+      border-color: var(--primary); 
+      box-shadow: 0 0 0 0.25rem rgba(10, 147, 150, 0.25); 
+    }
     
-    .btn-custom { border-radius: 10px; font-weight: 600; padding: 10px; width: 100%; margin-bottom: 10px; transition: all 0.2s ease-in-out; }
-    .btn-save { background-color: #0a9396; color: white; border: none; }
-    .btn-save:hover { background-color: #005f73; color: white; }
-    .btn-history { background-color: #94d2bd; color: #003049; border: none; }
-    .btn-history:hover { background-color: #72ba9f; color: #003049; }
-    .btn-stats { background-color: #e9d8a6; color: #003049; border: none; }
-    .btn-stats:hover { background-color: #dfca8d; color: #003049; }
+    .btn-custom { 
+      border-radius: 12px; 
+      font-weight: 600; 
+      padding: 11px 16px; 
+      width: 100%; 
+      margin-bottom: 10px; 
+      transition: all 0.2s ease-in-out;
+      min-height: 48px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 1rem;
+    }
+    .btn-save { background-color: var(--primary); color: white; border: none; }
+    .btn-save:hover, .btn-save:active { background-color: var(--primary-dark); color: white; }
+    .btn-history { background-color: var(--accent); color: var(--text-main); border: none; }
+    .btn-history:hover, .btn-history:active { background-color: #72ba9f; color: var(--text-main); }
+    .btn-stats { background-color: #e9d8a6; color: var(--text-main); border: none; }
+    .btn-stats:hover, .btn-stats:active { background-color: #dfca8d; color: var(--text-main); }
+    .btn-print { background-color: var(--primary-dark); color: white; border: none; }
+    .btn-print:hover, .btn-print:active { background-color: #004b5c; color: white; }
     .btn-back { background-color: #ee9b00; color: white; border: none; }
-    .btn-back:hover { background-color: #ca8200; color: white; }
+    .btn-back:hover, .btn-back:active { background-color: #ca8200; color: white; }
 
     #historySection, #statsSection { display: none; }
-    .table { font-size: 0.85rem; background-color: white; border-radius: 10px; overflow: hidden; }
-    .table th { background-color: #0a9396; color: white; }
-    .badge-result { font-size: 0.8rem; padding: 5px 10px; border-radius: 15px; margin-top: 5px; }
+    .table { font-size: 0.85rem; background-color: white; border-radius: 12px; overflow: hidden; }
+    .table th { background-color: var(--primary); color: white; font-weight: 600; }
+    .badge-result { font-size: 0.78rem; padding: 4px 10px; border-radius: 14px; margin-top: 4px; display: inline-block; }
     
     /* แจ้งเตือนภาพรวม */
-    #overallFeedback { font-size: 1.1rem; color: #003049; }
+    #overallFeedback { font-size: 1.05rem; color: var(--text-main); }
 
     /* ปฏิทินแบบคลิกเลือกทันที ไม่มีไอคอนรก */
     .date-picker-container {
       position: relative;
       width: 100%;
     }
-    #recordDateDisplay {
+    #recordDateDisplay, .date-display-input {
       cursor: pointer;
       background-color: #ffffff;
       text-align: center;
       font-weight: 600;
-      color: #005f73;
+      color: var(--primary-dark);
     }
-    #recordDate {
+    #recordDate, .date-raw-input {
       position: absolute;
       inset: 0;
       width: 100%;
@@ -106,7 +150,8 @@
       cursor: pointer;
       z-index: 2;
     }
-    #recordDate::-webkit-calendar-picker-indicator {
+    #recordDate::-webkit-calendar-picker-indicator,
+    .date-raw-input::-webkit-calendar-picker-indicator {
       position: absolute;
       top: 0;
       left: 0;
@@ -116,30 +161,13 @@
       cursor: pointer;
     }
 
-    /* ปุ่มตั้งค่าชีต */
-    .btn-config {
-      font-size: 0.78rem;
-      border: 1px solid rgba(10, 147, 150, 0.4);
-      background: rgba(255, 255, 255, 0.8);
-      color: #005f73;
-      border-radius: 20px;
-      padding: 3px 12px;
-      transition: all 0.2s ease;
+    /* กล่องกราฟปรับให้เหมาะกับมือถือ */
+    .chart-box {
+      position: relative;
+      width: 100%;
+      height: 290px;
+      margin-bottom: 16px;
     }
-    .btn-config:hover {
-      background: #94d2bd;
-      color: #003049;
-    }
-
-    .status-indicator {
-      display: inline-block;
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      margin-right: 5px;
-    }
-    .status-cloud { background-color: #2a9d8f; }
-    .status-local { background-color: #e76f51; }
 
     /* SweetAlert Mali font */
     .swal-font {
@@ -148,6 +176,59 @@
     .swal2-container {
       font-family: 'Mali', sans-serif !important;
     }
+
+    /* ปรับแต่งสำหรับหน้าจอมือถือขนาดเล็ก */
+    @media (max-width: 480px) {
+      .glass-panel {
+        padding: 18px 14px;
+        margin-top: 6px;
+        border-radius: 16px;
+      }
+      .app-title {
+        font-size: 1.3rem;
+      }
+      .chart-box {
+        height: 260px;
+      }
+      .table {
+        font-size: 0.78rem;
+      }
+      .table th, .table td {
+        padding: 6px 3px;
+      }
+    }
+
+    /* ------------------------------------------------------------ */
+    /* รูปแบบการพิมพ์รายงานทางการ (ใช้ฟอนต์ Sarabun ตามมาตรฐาน) */
+    /* ------------------------------------------------------------ */
+    #printReportContainer {
+      display: none;
+    }
+
+    @media print {
+      @page {
+        size: A4 portrait;
+        margin: 12mm 15mm;
+      }
+      body {
+        background: #ffffff !important;
+        color: #000000 !important;
+        font-family: 'Sarabun', sans-serif !important;
+        padding: 0 !important;
+        margin: 0 !important;
+      }
+      .main-wrapper, .glass-panel, .swal2-container, #waterForm, button, select, input, hr {
+        display: none !important;
+      }
+      #printReportContainer {
+        display: block !important;
+        font-family: 'Sarabun', sans-serif !important;
+        color: #111827 !important;
+        background: #ffffff !important;
+        width: 100% !important;
+        padding: 0 !important;
+      }
+    }
   </style>
 </head>
 <body>
@@ -155,38 +236,27 @@
 <div class="container main-wrapper">
   <!-- หน้าหลัก: บันทึกข้อมูล -->
   <div class="glass-panel" id="mainSection">
-    <div class="d-flex justify-content-between align-items-center mb-2">
-      <div id="connStatusBadge" style="font-size: 0.75rem; color: #005f73;">
-        <span class="status-indicator status-local" id="statusDot"></span><span id="statusText">กำลังตรวจสอบการเชื่อมต่อ...</span>
-      </div>
-      <button type="button" class="btn btn-config" onclick="configureGasUrl()" title="ตั้งค่าเชื่อมต่อ Google Sheets">
-        ⚙️ ตั้งค่าเชื่อมต่อ
-      </button>
-    </div>
-
     <h3 class="app-title">💧 บันทึกคุณภาพน้ำ</h3>
-    <hr>
+    <hr class="my-3">
     
     <form id="waterForm" onsubmit="submitForm(event)">
       <!-- ช่องเลือกวันที่แบบ พ.ศ. (dd/mm/yyyy) คลิกเปิดปฏิทินทันที -->
       <div class="mb-3">
         <label>📅 วันที่บันทึก (พ.ศ.)</label>
         <div class="date-picker-container">
-          <input type="text" class="form-control" id="recordDateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker()" title="คลิกเพื่อเลือกวันที่">
-          <input type="date" class="form-control" id="recordDate" onchange="onDateChange(this.value)" required>
+          <input type="text" class="form-control" id="recordDateDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('recordDate')" title="คลิกเพื่อเลือกวันที่">
+          <input type="date" class="form-control" id="recordDate" onchange="onDateChange('recordDate', 'recordDateDisplay', this.value)" required>
         </div>
       </div>
       
       <div class="mb-3">
         <label>🧪 ค่า pH (0-14)</label>
-        <!-- inputmode="decimal" ทำให้แป้นพิมพ์เป็น Numpad ทันที -->
         <input type="number" class="form-control" id="phValue" step="0.01" min="0" max="14" placeholder="เช่น 7.2" inputmode="decimal" oninput="previewAll()" required>
         <div id="phFeedback" class="mt-1"></div>
       </div>
       
-      <div class="mb-4">
+      <div class="mb-3">
         <label>🔬 ค่า TDS (ppm)</label>
-        <!-- inputmode="decimal" ทำให้แป้นพิมพ์เป็น Numpad ทันที -->
         <input type="number" class="form-control" id="tdsValue" step="0.01" min="0" placeholder="เช่น 250.5" inputmode="decimal" oninput="previewAll()" required>
         <div id="tdsFeedback" class="mt-1"></div>
       </div>
@@ -197,12 +267,12 @@
       <button type="submit" class="btn btn-custom btn-save" id="saveBtn">💾 บันทึกผล</button>
     </form>
     
-    <hr>
-    <div class="row">
-      <div class="col-6 pe-1">
+    <hr class="my-3">
+    <div class="row g-2">
+      <div class="col-6">
         <button class="btn btn-custom btn-history" onclick="showSection('historySection')">📜 ดูประวัติ</button>
       </div>
-      <div class="col-6 ps-1">
+      <div class="col-6">
         <button class="btn btn-custom btn-stats" onclick="showSection('statsSection')">📊 ดูสถิติ</button>
       </div>
     </div>
@@ -211,14 +281,14 @@
   <!-- หน้า: ประวัติ -->
   <div class="glass-panel" id="historySection">
     <h3 class="app-title">📜 ประวัติย้อนหลัง</h3>
-    <button class="btn btn-custom btn-back mt-3 mb-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    <button class="btn btn-custom btn-back my-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
     <div class="table-responsive">
-      <table class="table table-bordered text-center align-middle">
+      <table class="table table-bordered text-center align-middle mb-0">
         <thead>
           <tr>
-            <th width="33%">วันที่ (พ.ศ.)</th>
+            <th width="34%">วันที่ (พ.ศ.)</th>
             <th width="33%">pH</th>
-            <th width="34%">TDS</th>
+            <th width="33%">TDS</th>
           </tr>
         </thead>
         <tbody id="historyTableBody">
@@ -228,28 +298,60 @@
     </div>
   </div>
 
-  <!-- หน้า: สถิติ -->
+  <!-- หน้า: สถิติและพิมพ์รายงาน -->
   <div class="glass-panel" id="statsSection">
     <h3 class="app-title">📊 สถิติคุณภาพน้ำ</h3>
-    <button class="btn btn-custom btn-back mt-3 mb-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
+    <button class="btn btn-custom btn-back my-3" onclick="showSection('mainSection')">⬅️ กลับหน้าหลัก</button>
     
-    <select class="form-select mb-3" id="timeFilter" onchange="updateChart()">
+    <label>📅 เลือกช่วงเวลาแสดงผล:</label>
+    <select class="form-select mb-2" id="timeFilter" onchange="onTimeFilterChange()">
       <option value="all">ทั้งหมด</option>
-      <option value="week">สัปดาห์นี้</option>
+      <option value="week">สัปดาห์นี้ (7 วันล่าสุด)</option>
       <option value="month">เดือนนี้</option>
       <option value="year">ปีนี้</option>
+      <option value="custom">กำหนดช่วงวันที่เอง...</option>
     </select>
 
-    <canvas id="waterChart"></canvas>
+    <!-- ช่องกำหนดช่วงวันที่เอง (แสดงเมื่อเลือก กำหนดช่วงวันที่เอง) -->
+    <div id="customDateRangeBox" style="display: none;" class="mb-3">
+      <div class="row g-2">
+        <div class="col-6">
+          <label style="font-size: 0.85rem;">ตั้งแต่วันที่:</label>
+          <div class="date-picker-container">
+            <input type="text" class="form-control date-display-input" id="customStartDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customStart')">
+            <input type="date" class="form-control date-raw-input" id="customStart" onchange="onDateChange('customStart', 'customStartDisplay', this.value); updateChart();">
+          </div>
+        </div>
+        <div class="col-6">
+          <label style="font-size: 0.85rem;">ถึงวันที่:</label>
+          <div class="date-picker-container">
+            <input type="text" class="form-control date-display-input" id="customEndDisplay" readonly placeholder="วว/ดด/ปปปป" onclick="openDatePicker('customEnd')">
+            <input type="date" class="form-control date-raw-input" id="customEnd" onchange="onDateChange('customEnd', 'customEndDisplay', this.value); updateChart();">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- กราฟ Chart.js ปรับขนาดให้เหมาะกับมือถือแนวตั้ง -->
+    <div class="chart-box">
+      <canvas id="waterChart"></canvas>
+    </div>
+
+    <!-- ปุ่มพิมพ์รายงานกราฟ -->
+    <button type="button" class="btn btn-custom btn-print" onclick="printReport()">
+      🖨️ พิมพ์รายงานกราฟ
+    </button>
   </div>
 </div>
 
+<!-- พื้นที่สำหรับแสดงเอกสารพิมพ์รายงาน (แสดงเฉพาะตอน Print โดยใช้ฟอนต์ Sarabun) -->
+<div id="printReportContainer"></div>
+
 <script>
   // ============================================================
-  // การตั้งค่า Google Apps Script Web App URL
+  // การเชื่อมต่อ Google Apps Script Web App อัตโนมัติ (ทำงานเบื้องหลัง 100%)
   // ============================================================
-  const DEFAULT_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQI6ql2evbiBkVFo1RxOFqyNyGQPTQik7C9R9MluOsPmsRyVuuSj7MzF_mG-6D1ts-/exec"; 
-  let SCRIPT_URL = localStorage.getItem('WATER_QUALITY_GAS_URL') || DEFAULT_SCRIPT_URL;
+  const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwQI6ql2evbiBkVFo1RxOFqyNyGQPTQik7C9R9MluOsPmsRyVuuSj7MzF_mG-6D1ts-/exec";
 
   let rawData = [];
   let waterChartObj = null;
@@ -257,8 +359,8 @@
   // ------------------------------------------------------------
   // ระบบจัดการวันที่ตามมาตรฐานไทย พ.ศ. (dd/mm/yyyy)
   // ------------------------------------------------------------
-  function openDatePicker() {
-    const el = document.getElementById('recordDate');
+  function openDatePicker(inputId) {
+    const el = document.getElementById(inputId);
     if (el) {
       if (typeof el.showPicker === 'function') {
         try { el.showPicker(); return; } catch(e) {}
@@ -281,8 +383,8 @@
     return isoDateStr;
   }
 
-  function onDateChange(val) {
-    const display = document.getElementById('recordDateDisplay');
+  function onDateChange(inputId, displayId, val) {
+    const display = document.getElementById(displayId);
     if (!val) { if (display) display.value = ''; return; }
     if (display) display.value = formatBE(val);
   }
@@ -298,6 +400,24 @@
     const dateDisplay = document.getElementById('recordDateDisplay');
     if (dateInput) dateInput.value = isoToday;
     if (dateDisplay) dateDisplay.value = formatBE(isoToday);
+
+    // กำหนดค่าเริ่มต้นช่วงวันที่กำหนดเอง
+    const customEnd = document.getElementById('customEnd');
+    const customEndDisplay = document.getElementById('customEndDisplay');
+    if (customEnd) customEnd.value = isoToday;
+    if (customEndDisplay) customEndDisplay.value = formatBE(isoToday);
+
+    // ย้อนหลัง 30 วันสำหรับเริ่มต้น
+    const past30 = new Date();
+    past30.setDate(past30.getDate() - 30);
+    const pastY = past30.getFullYear();
+    const pastM = String(past30.getMonth() + 1).padStart(2, '0');
+    const pastD = String(past30.getDate()).padStart(2, '0');
+    const isoPast = `${pastY}-${pastM}-${pastD}`;
+    const customStart = document.getElementById('customStart');
+    const customStartDisplay = document.getElementById('customStartDisplay');
+    if (customStart) customStart.value = isoPast;
+    if (customStartDisplay) customStartDisplay.value = formatBE(isoPast);
   }
 
   function parseThaiDate(dateStr) {
@@ -353,59 +473,6 @@
   }
 
   // ------------------------------------------------------------
-  // สถานะการเชื่อมต่อ และการตั้งค่า GAS Web App URL
-  // ------------------------------------------------------------
-  function updateConnectionBadge() {
-    const dot = document.getElementById('statusDot');
-    const text = document.getElementById('statusText');
-    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
-      dot.className = "status-indicator status-cloud";
-      text.innerText = "เชื่อมต่อ Google Sheets";
-      text.style.color = "#005f73";
-    } else {
-      dot.className = "status-indicator status-local";
-      text.innerText = "โหมดบันทึกในเครื่อง (Local)";
-      text.style.color = "#bb3e03";
-    }
-  }
-
-  function configureGasUrl() {
-    Swal.fire({
-      title: '⚙️ ตั้งค่า Google Sheets',
-      html: `
-        <div style="text-align: left; font-size: 0.9rem;">
-          <p>วาง <b>URL เว็บแอป (Web App URL)</b> ที่ได้จากการ Deploy ใน Google Apps Script เพื่อบันทึกข้อมูลลง Google Sheet อัตโนมัติ:</p>
-          <input type="url" id="swalScriptUrl" class="form-control" placeholder="https://script.google.com/macros/s/.../exec" value="${SCRIPT_URL}">
-          <small class="text-muted d-block mt-2">💡 หากเว้นว่างไว้ ระบบจะสลับไปทำงานในโหมด Offline / LocalStorage ในเครื่องอัตโนมัติ</small>
-        </div>
-      `,
-      showCancelButton: true,
-      confirmButtonText: '💾 บันทึกการตั้งค่า',
-      cancelButtonText: 'ยกเลิก',
-      confirmButtonColor: '#0a9396',
-      customClass: { popup: 'swal-font' },
-      preConfirm: () => {
-        const val = document.getElementById('swalScriptUrl').value.trim();
-        return val;
-      }
-    }).then((result) => {
-      if (result.isConfirmed) {
-        SCRIPT_URL = result.value;
-        localStorage.setItem('WATER_QUALITY_GAS_URL', SCRIPT_URL);
-        updateConnectionBadge();
-        Swal.fire({
-          icon: 'success',
-          title: 'บันทึกเรียบร้อย!',
-          text: SCRIPT_URL ? 'ระบบจะเชื่อมต่อไปยัง Google Sheets อัตโนมัติ' : 'สลับมาใช้โหมด Local สำรองในเครื่อง',
-          confirmButtonColor: '#0a9396',
-          customClass: { popup: 'swal-font' }
-        });
-        loadData();
-      }
-    });
-  }
-
-  // ------------------------------------------------------------
   // สร้างป้ายสีสำหรับการแปลผล (คงรูปแบบเดิม 100%)
   // ------------------------------------------------------------
   function getBadgeHTML(statusText) {
@@ -446,118 +513,44 @@
     // แปลผลรวม
     if (phRes && tdsRes) {
       let overall = "";
-      if (phRes === "ควรปรับปรุง" || tdsRes === "ควรปรับปรุง") overall = "ควรปรับปรุง";
+      if (phRes === "ควรปรับปรุง" || tdsResultIsPoor(phRes, tdsRes)) overall = "ควรปรับปรุง";
       else if (phRes === "พอใช้" || tdsRes === "พอใช้") overall = "พอใช้";
       else overall = "ดี";
       overallFb.innerHTML = "🌟 ภาพรวมน้ำ: " + getBadgeHTML(overall);
     } else { overallFb.innerHTML = ""; }
   }
 
-  // ------------------------------------------------------------
-  // ฟังก์ชันคำนวณผลและบันทึก LocalStorage สำรอง
-  // ------------------------------------------------------------
-  function calculateResults(phNum, tdsNum) {
-    let phResult = "";
-    if (phNum < 6.5) phResult = "ควรปรับปรุง";
-    else if (phNum < 6.9) phResult = "พอใช้";
-    else if (phNum < 7.6) phResult = "ดี";
-    else if (phNum <= 8.5) phResult = "พอใช้";
-    else phResult = "ควรปรับปรุง";
-
-    let tdsResult = "";
-    if (tdsNum < 500) tdsResult = "ดี";
-    else if (tdsNum <= 1000) tdsResult = "พอใช้";
-    else tdsResult = "ควรปรับปรุง";
-
-    let overallResult = "";
-    if (phResult === "ควรปรับปรุง" || tdsResult === "ควรปรับปรุง") {
-      overallResult = "ควรปรับปรุง";
-    } else if (phResult === "พอใช้" || tdsResult === "พอใช้") {
-      overallResult = "พอใช้";
-    } else {
-      overallResult = "ดี";
-    }
-
-    return { phResult, tdsResult, overallResult };
-  }
-
-  function getFromLocalStorage() {
-    try {
-      const stored = localStorage.getItem('WATER_QUALITY_LOCAL_DATA');
-      if (stored) {
-        return JSON.parse(stored);
-      }
-    } catch (e) {}
-    return [];
-  }
-
-  function saveToLocalStorage(dateStr, ph, tds) {
-    const phNum = parseFloat(ph);
-    const tdsNum = parseFloat(tds);
-    const calc = calculateResults(phNum, tdsNum);
-    const current = getFromLocalStorage();
-    current.push([dateStr, phNum, calc.phResult, tdsNum, calc.tdsResult, calc.overallResult]);
-    current.sort((a, b) => parseThaiDate(a[0]).getTime() - parseThaiDate(b[0]).getTime());
-    localStorage.setItem('WATER_QUALITY_LOCAL_DATA', JSON.stringify(current));
-    
-    return {
-      ph: phNum,
-      phStatus: calc.phResult,
-      tds: tdsNum,
-      tdsStatus: calc.tdsResult,
-      overall: calc.overallResult
-    };
+  function tdsResultIsPoor(phRes, tdsRes) {
+    return (phRes === "ควรปรับปรุง" || tdsRes === "ควรปรับปรุง");
   }
 
   // ------------------------------------------------------------
-  // ฟังก์ชันบันทึกข้อมูล (รองรับทั้ง GAS Web API, Native GAS, และ Local)
+  // บันทึกข้อมูลไปยัง Google Sheets อัตโนมัติ (ทำงานเบื้องหลัง)
   // ------------------------------------------------------------
   async function callSaveApi(dateStr, ph, tds) {
-    // 1. ถ้าทำงานใน Google Apps Script ดั้งเดิม
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      return new Promise((resolve, reject) => {
-        google.script.run
-          .withSuccessHandler(res => resolve(typeof res === 'string' ? JSON.parse(res) : res))
-          .withFailureHandler(err => reject(err))
-          .saveData(dateStr, ph, tds);
+    try {
+      const response = await fetch(SCRIPT_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'text/plain;charset=utf-8' },
+        body: JSON.stringify({ action: 'saveData', date: dateStr, ph: ph, tds: tds })
       });
-    }
-
-    // 2. ถ้ามี Google Apps Script Web App URL
-    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
-      try {
-        // ส่งแบบ text/plain POST เพื่อข้าม CORS Preflight OPTIONS บน Google Apps Script
-        const response = await fetch(SCRIPT_URL, {
-          method: 'POST',
-          headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-          body: JSON.stringify({ action: 'saveData', date: dateStr, ph: ph, tds: tds })
-        });
-        const resJson = await response.json();
-        if (resJson.status === 'success') {
-          return resJson.data;
-        } else {
-          throw new Error(resJson.message || 'บันทึกข้อมูลไม่สำเร็จ');
-        }
-      } catch (err) {
-        // สำรองลองส่งด้วย GET ในกรณีเบราว์เซอร์ไม่อนุญาต redirect ของ POST
-        try {
-          const getUrl = `${SCRIPT_URL}?action=saveData&date=${encodeURIComponent(dateStr)}&ph=${encodeURIComponent(ph)}&tds=${encodeURIComponent(tds)}`;
-          const getRes = await fetch(getUrl);
-          const getJson = await getRes.json();
-          if (getJson.status === 'success') {
-            return getJson.data;
-          }
-        } catch (e) {
-          throw new Error('ไม่สามารถบันทึกไปยัง Google Sheets: ' + (err.message || err));
-        }
+      const resJson = await response.json();
+      if (resJson.status === 'success') {
+        return resJson.data;
+      }
+    } catch (err) {
+      // ลองส่งด้วย GET สำรองในกรณีที่เบราว์เซอร์ติด Redirect
+      const getUrl = `${SCRIPT_URL}?action=saveData&date=${encodeURIComponent(dateStr)}&ph=${encodeURIComponent(ph)}&tds=${encodeURIComponent(tds)}`;
+      const getRes = await fetch(getUrl);
+      const getJson = await getRes.json();
+      if (getJson.status === 'success') {
+        return getJson.data;
       }
     }
-
-    // 3. Fallback LocalStorage
-    return saveToLocalStorage(dateStr, ph, tds);
+    throw new Error('ไม่สามารถบันทึกข้อมูลไปยัง Google Sheets ได้');
   }
 
-  // ฟังก์ชันบันทึกข้อมูล พร้อม Popup (คงฟังก์ชันและหน้าตาเดิม 100%)
+  // ฟังก์ชันบันทึกข้อมูล พร้อม Popup
   async function submitForm(event) {
     event.preventDefault();
     const btn = document.getElementById('saveBtn');
@@ -572,7 +565,6 @@
     try {
       const res = await callSaveApi(dateFormatted, ph, tds);
 
-      // Popup แสดงผลหลังจากบันทึกสำเร็จ (ใช้ฟอนต์ Mali ผ่าน CSS ภายนอก)
       Swal.fire({
         title: 'บันทึกสำเร็จ!',
         html: `<b>สรุปคุณภาพน้ำ: ${getBadgeHTML(res.overall)}</b><br><br>
@@ -594,8 +586,8 @@
     } catch (err) {
       console.error(err);
       Swal.fire({
-        title: 'เกิดข้อผิดพลาด',
-        text: err.message || 'ไม่สามารถบันทึกข้อมูลได้',
+        title: 'บันทึกไม่สำเร็จ',
+        text: 'กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ตแล้วลองใหม่อีกครั้ง',
         icon: 'error',
         confirmButtonColor: '#0a9396',
         customClass: { popup: 'swal-font' }
@@ -605,61 +597,41 @@
     }
   }
 
-  // สลับหน้าจอ (คงโค้ดเดิม 100%)
+  // สลับหน้าจอ
   function showSection(sectionId) {
     document.getElementById('mainSection').style.display = 'none';
     document.getElementById('historySection').style.display = 'none';
     document.getElementById('statsSection').style.display = 'none';
     document.getElementById(sectionId).style.display = 'block';
-    if(sectionId !== 'mainSection') loadData();
+    if (sectionId !== 'mainSection') loadData();
   }
 
-  // โหลดข้อมูลประวัติ (รองรับทั้ง Google Apps Script, Web API, และ Local)
+  // โหลดข้อมูลประวัติสดจาก Google Sheets อัตโนมัติในเบื้องหลัง
   async function loadData() {
-    // 1. Native Google Apps Script
-    if (typeof google !== 'undefined' && google.script && google.script.run) {
-      google.script.run.withSuccessHandler(function(data) {
-        rawData = data;
+    try {
+      const response = await fetch(`${SCRIPT_URL}?action=getHistory`);
+      const resJson = await response.json();
+      if (resJson.status === 'success' && Array.isArray(resJson.data)) {
+        rawData = resJson.data;
         renderTable();
         updateChart();
-      }).getHistory();
-      return;
-    }
-
-    // 2. Google Apps Script Web App API
-    if (SCRIPT_URL && SCRIPT_URL.trim() !== "") {
-      try {
-        const response = await fetch(`${SCRIPT_URL}?action=getHistory`);
-        const resJson = await response.json();
-        if (resJson.status === 'success') {
-          rawData = resJson.data || [];
-          renderTable();
-          updateChart();
-          return;
-        }
-      } catch (err) {
-        console.warn("GAS Web API fetch failed, fallback to local:", err);
       }
+    } catch (err) {
+      console.warn("Auto sync background fetch:", err);
     }
-
-    // 3. LocalStorage Fallback
-    rawData = getFromLocalStorage();
-    renderTable();
-    updateChart();
   }
 
-  // วาดตารางประวัติ (เพิ่มผลรวมไปไว้ใต้ช่องวันที่ และแสดงวันที่เป็น พ.ศ.)
+  // วาดตารางประวัติ
   function renderTable() {
     let tbody = document.getElementById('historyTableBody');
     tbody.innerHTML = '';
-    if(rawData.length === 0) {
+    if (rawData.length === 0) {
       tbody.innerHTML = '<tr><td colspan="3">ยังไม่มีข้อมูล</td></tr>';
       return;
     }
     
     let reverseData = [...rawData].reverse();
     reverseData.forEach(row => {
-      // row[0]=วันที่, row[1]=pH, row[2]=ผลpH, row[3]=TDS, row[4]=ผลTDS, row[5]=ผลรวม
       let dateDisplay = formatDisplayDateBE(row[0]);
       let overallBadge = row[5] ? `<br>รวม: ${getBadgeHTML(row[5])}` : "";
       let tr = document.createElement('tr');
@@ -672,24 +644,58 @@
     });
   }
 
-  // คัดกรองและสร้างกราฟ (รองรับการกรองวันที่ทั้ง พ.ศ. และ ค.ศ.)
-  function updateChart() {
+  // ------------------------------------------------------------
+  // ระบบคัดกรองข้อมูลตามช่วงเวลา (ทั้งหมด, สัปดาห์นี้, เดือนนี้, ปีนี้, กำหนดเอง)
+  // ------------------------------------------------------------
+  function onTimeFilterChange() {
+    const filter = document.getElementById('timeFilter').value;
+    const customBox = document.getElementById('customDateRangeBox');
+    if (filter === 'custom') {
+      customBox.style.display = 'block';
+    } else {
+      customBox.style.display = 'none';
+    }
+    updateChart();
+  }
+
+  function getFilteredData() {
     const filter = document.getElementById('timeFilter').value;
     const today = new Date();
+    today.setHours(23, 59, 59, 999);
     
-    let filteredData = rawData.filter(row => {
+    return rawData.filter(row => {
       if (filter === 'all') return true;
       let rowDate = parseThaiDate(row[0]);
       if (isNaN(rowDate.getTime())) return true;
-      if (filter === 'year') return rowDate.getFullYear() === today.getFullYear();
-      if (filter === 'month') return rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear();
+      
+      if (filter === 'year') {
+        return rowDate.getFullYear() === today.getFullYear();
+      }
+      if (filter === 'month') {
+        return rowDate.getMonth() === today.getMonth() && rowDate.getFullYear() === today.getFullYear();
+      }
       if (filter === 'week') {
-        let diff = Math.round((today - rowDate) / (1000 * 60 * 60 * 24));
-        return diff >= 0 && diff <= 7;
+        let diffTime = today.getTime() - rowDate.getTime();
+        let diffDays = diffTime / (1000 * 60 * 60 * 24);
+        return diffDays >= 0 && diffDays <= 7;
+      }
+      if (filter === 'custom') {
+        const sRaw = document.getElementById('customStart').value;
+        const eRaw = document.getElementById('customEnd').value;
+        if (!sRaw && !eRaw) return true;
+        let sDate = sRaw ? new Date(sRaw) : new Date(0);
+        sDate.setHours(0, 0, 0, 0);
+        let eDate = eRaw ? new Date(eRaw) : new Date(8640000000000000);
+        eDate.setHours(23, 59, 59, 999);
+        return rowDate >= sDate && rowDate <= eDate;
       }
       return true;
     });
+  }
 
+  // คัดกรองและสร้างกราฟ
+  function updateChart() {
+    const filteredData = getFilteredData();
     const labels = filteredData.map(row => formatDisplayDateBE(row[0]));
     const phData = filteredData.map(row => row[1]);
     const tdsData = filteredData.map(row => row[3]);
@@ -697,7 +703,7 @@
     drawChart(labels, phData, tdsData);
   }
 
-  // วาดกราฟให้อ่านง่ายขึ้น (เส้นหนาขึ้น จุดใหญ่ขึ้น ฟอนต์กราฟเป็น Mali - คงเดิม 100%)
+  // วาดกราฟ Chart.js
   function drawChart(labels, phData, tdsData) {
     const ctx = document.getElementById('waterChart').getContext('2d');
     if (waterChartObj) waterChartObj.destroy();
@@ -710,45 +716,224 @@
           {
             label: 'ค่า pH', data: phData,
             borderColor: '#0a9396', backgroundColor: '#0a9396',
-            yAxisID: 'y', tension: 0.3, pointRadius: 6, borderWidth: 3 // จุดใหญ่ขึ้น เส้นหนาขึ้น
+            yAxisID: 'y', tension: 0.3, pointRadius: 5, borderWidth: 2.5
           },
           {
             label: 'ค่า TDS (ppm)', data: tdsData,
             borderColor: '#bb3e03', backgroundColor: '#bb3e03',
-            yAxisID: 'y1', tension: 0.3, pointRadius: 6, borderWidth: 3 // จุดใหญ่ขึ้น เส้นหนาขึ้น
+            yAxisID: 'y1', tension: 0.3, pointRadius: 5, borderWidth: 2.5
           }
         ]
       },
       options: {
         responsive: true,
+        maintainAspectRatio: false,
         interaction: { mode: 'index', intersect: false },
         plugins: {
-          legend: { labels: { font: { family: 'Mali', size: 14 } } },
+          legend: { 
+            labels: { 
+              font: { family: 'Mali', size: 13 },
+              boxWidth: 14,
+              padding: 12
+            } 
+          },
           tooltip: {
-            titleFont: { family: 'Mali', size: 14 },
-            bodyFont: { family: 'Mali', size: 14 },
-            padding: 10
+            titleFont: { family: 'Mali', size: 13 },
+            bodyFont: { family: 'Mali', size: 13 },
+            padding: 8
           }
         },
         scales: {
           x: {
-            ticks: { font: { family: 'Mali' } }
+            ticks: { 
+              font: { family: 'Mali', size: 11 },
+              maxRotation: 45,
+              minRotation: 0
+            }
           },
           y: {
             type: 'linear', display: true, position: 'left',
-            title: { display: true, text: 'pH (0-14)', font: { family: 'Mali' } },
+            title: { display: true, text: 'pH (0-14)', font: { family: 'Mali', size: 12 } },
             min: 0, max: 14,
-            ticks: { font: { family: 'Mali' } }
+            ticks: { font: { family: 'Mali', size: 11 } }
           },
           y1: {
             type: 'linear', display: true, position: 'right',
-            title: { display: true, text: 'TDS (ppm)', font: { family: 'Mali' } },
+            title: { display: true, text: 'TDS (ppm)', font: { family: 'Mali', size: 12 } },
             grid: { drawOnChartArea: false },
-            ticks: { font: { family: 'Mali' } }
+            ticks: { font: { family: 'Mali', size: 11 } }
           }
         }
       }
     });
+  }
+
+  // ------------------------------------------------------------
+  // ระบบพิมพ์รายงานกราฟค่าน้ำ (เอกสารทางการใช้ฟอนต์ 'Sarabun' ตามข้อ 4)
+  // ------------------------------------------------------------
+  function printReport() {
+    const filter = document.getElementById('timeFilter').value;
+    const filteredData = getFilteredData();
+    
+    if (!filteredData || filteredData.length === 0) {
+      Swal.fire({
+        title: 'ไม่พบข้อมูล',
+        text: 'ไม่มีข้อมูลคุณภาพน้ำในช่วงเวลาที่ท่านเลือกสำหรับการพิมพ์รายงาน',
+        icon: 'info',
+        confirmButtonColor: '#0a9396',
+        customClass: { popup: 'swal-font' }
+      });
+      return;
+    }
+
+    // 1. ระบุข้อความช่วงเวลา
+    let rangeText = "";
+    if (filter === 'all') rangeText = "ข้อมูลทั้งหมด";
+    else if (filter === 'week') rangeText = "สัปดาห์นี้ (7 วันล่าสุด)";
+    else if (filter === 'month') rangeText = "ประจำเดือนนี้";
+    else if (filter === 'year') rangeText = "ประจำปีนี้";
+    else if (filter === 'custom') {
+      const sDate = document.getElementById('customStartDisplay').value || "-";
+      const eDate = document.getElementById('customEndDisplay').value || "-";
+      rangeText = `ระหว่างวันที่ ${sDate} ถึง ${eDate}`;
+    }
+
+    // 2. คำนวณสรุปสถิติ
+    const count = filteredData.length;
+    const phList = filteredData.map(r => parseFloat(r[1])).filter(v => !isNaN(v));
+    const tdsList = filteredData.map(r => parseFloat(r[3])).filter(v => !isNaN(v));
+
+    const minPh = phList.length ? Math.min(...phList).toFixed(2) : "-";
+    const maxPh = phList.length ? Math.max(...phList).toFixed(2) : "-";
+    const avgPh = phList.length ? (phList.reduce((a, b) => a + b, 0) / phList.length).toFixed(2) : "-";
+
+    const minTds = tdsList.length ? Math.min(...tdsList).toFixed(1) : "-";
+    const maxTds = tdsList.length ? Math.max(...tdsList).toFixed(1) : "-";
+    const avgTds = tdsList.length ? (tdsList.reduce((a, b) => a + b, 0) / tdsList.length).toFixed(1) : "-";
+
+    // 3. ดึงภาพกราฟ Snapshot เป็น Base64 คมชัดสูง
+    let chartImgSrc = "";
+    if (waterChartObj) {
+      chartImgSrc = waterChartObj.toBase64Image('image/png', 1.0);
+    }
+
+    // 4. วันที่พิมพ์เอกสารแบบ พ.ศ.
+    const now = new Date();
+    const dayStr = String(now.getDate()).padStart(2, '0');
+    const monthNamesThai = ["มกราคม", "กุมภาพันธ์", "มีนาคม", "เมษายน", "พฤษภาคม", "มิถุนายน", "กรกฎาคม", "สิงหาคม", "กันยายน", "ตุลาคม", "พฤศจิกายน", "ธันวาคม"];
+    const printDateStr = `${dayStr} ${monthNamesThai[now.getMonth()]} พ.ศ. ${now.getFullYear() + 543} เวลา ${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')} น.`;
+
+    // 5. สร้างรายการตารางประวัติ
+    let rowsHtml = "";
+    filteredData.forEach((r, idx) => {
+      rowsHtml += `
+        <tr>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${idx + 1}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${formatDisplayDateBE(r[0])}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[1]}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[2] || "-"}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[3]}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center;">${r[4] || "-"}</td>
+          <td style="border: 1px solid #444; padding: 6px; text-align: center; font-weight: bold;">${r[5] || "-"}</td>
+        </tr>
+      `;
+    });
+
+    // 6. ประกอบโครงร่างรายงานฟอนต์ Sarabun
+    const printContainer = document.getElementById('printReportContainer');
+    printContainer.innerHTML = `
+      <div style="font-family: 'Sarabun', sans-serif; color: #111; line-height: 1.5; padding: 10px 0;">
+        <!-- หัวเอกสารรายงาน -->
+        <div style="text-align: center; border-bottom: 2px solid #005f73; padding-bottom: 10px; margin-bottom: 16px;">
+          <h2 style="margin: 0; font-size: 22px; font-weight: 700; color: #005f73;">รายงานผลการตรวจวัดและสถิติคุณภาพน้ำ</h2>
+          <p style="margin: 4px 0 0 0; font-size: 14px; color: #555;">Water Quality Monitoring and Assessment Report</p>
+        </div>
+
+        <!-- ข้อมูลหัวรายงาน -->
+        <div style="display: flex; justify-content: space-between; font-size: 14px; margin-bottom: 16px; border-bottom: 1px dashed #ccc; padding-bottom: 8px;">
+          <div><b>ช่วงเวลาที่รายงาน:</b> ${rangeText}</div>
+          <div><b>วันที่พิมพ์เอกสาร:</b> ${printDateStr}</div>
+        </div>
+
+        <!-- ส่วนกราฟสถิติ -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 15px; font-weight: 600; color: #005f73; margin-bottom: 8px;">📊 กราฟแสดงแนวโน้มคุณภาพน้ำ (pH และ TDS)</div>
+          <div style="text-align: center; border: 1px solid #ccc; border-radius: 8px; padding: 12px; background: #fff;">
+            <img src="${chartImgSrc}" style="width: 100%; max-height: 310px; object-fit: contain;" alt="กราฟสถิติคุณภาพน้ำ">
+          </div>
+        </div>
+
+        <!-- ส่วนตารางสรุปสถิติและค่าเฉลี่ย -->
+        <div style="margin-bottom: 20px;">
+          <div style="font-size: 15px; font-weight: 600; color: #005f73; margin-bottom: 8px;">📋 สรุปผลการประเมินและค่าเฉลี่ย (จำนวนการตรวจวัด: ${count} ครั้ง)</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 13.5px;">
+            <thead>
+              <tr style="background-color: #e6f2f2; text-align: center;">
+                <th style="border: 1px solid #444; padding: 7px 6px;">พารามิเตอร์</th>
+                <th style="border: 1px solid #444; padding: 7px 6px;">เกณฑ์มาตรฐานแนะนำ</th>
+                <th style="border: 1px solid #444; padding: 7px 6px;">ค่าต่ำสุด (Min)</th>
+                <th style="border: 1px solid #444; padding: 7px 6px;">ค่าสูงสุด (Max)</th>
+                <th style="border: 1px solid #444; padding: 7px 6px;">ค่าเฉลี่ย (Average)</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr style="text-align: center;">
+                <td style="border: 1px solid #444; padding: 6px; font-weight: 600;">ค่าความเป็นกรด-ด่าง (pH)</td>
+                <td style="border: 1px solid #444; padding: 6px;">6.5 - 8.5</td>
+                <td style="border: 1px solid #444; padding: 6px;">${minPh}</td>
+                <td style="border: 1px solid #444; padding: 6px;">${maxPh}</td>
+                <td style="border: 1px solid #444; padding: 6px; font-weight: bold; color: #005f73;">${avgPh}</td>
+              </tr>
+              <tr style="text-align: center;">
+                <td style="border: 1px solid #444; padding: 6px; font-weight: 600;">สารละลายทั้งหมด (TDS, ppm)</td>
+                <td style="border: 1px solid #444; padding: 6px;">น้อยกว่า 500 ppm</td>
+                <td style="border: 1px solid #444; padding: 6px;">${minTds}</td>
+                <td style="border: 1px solid #444; padding: 6px;">${maxTds}</td>
+                <td style="border: 1px solid #444; padding: 6px; font-weight: bold; color: #005f73;">${avgTds}</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <!-- รายละเอียดตารางข้อมูล -->
+        <div style="margin-bottom: 25px;">
+          <div style="font-size: 15px; font-weight: 600; color: #005f73; margin-bottom: 8px;">📝 รายละเอียดข้อมูลการตรวจวัด</div>
+          <table style="width: 100%; border-collapse: collapse; font-size: 12.5px;">
+            <thead>
+              <tr style="background-color: #f2f2f2; text-align: center;">
+                <th style="border: 1px solid #444; padding: 6px; width: 45px;">ลำดับ</th>
+                <th style="border: 1px solid #444; padding: 6px;">วันที่บันทึก (พ.ศ.)</th>
+                <th style="border: 1px solid #444; padding: 6px;">ค่า pH</th>
+                <th style="border: 1px solid #444; padding: 6px;">แปลผล pH</th>
+                <th style="border: 1px solid #444; padding: 6px;">ค่า TDS (ppm)</th>
+                <th style="border: 1px solid #444; padding: 6px;">แปลผล TDS</th>
+                <th style="border: 1px solid #444; padding: 6px;">ภาพรวม</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rowsHtml}
+            </tbody>
+          </table>
+        </div>
+
+        <!-- ส่วนลงนามท้ายเอกสาร -->
+        <div style="display: flex; justify-content: space-between; margin-top: 35px; font-size: 13.5px; page-break-inside: avoid;">
+          <div style="text-align: center; width: 45%;">
+            <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+            <p style="margin: 0;">( ................................................................ )</p>
+            <p style="margin: 4px 0 0 0; color: #555;">ผู้ตรวจวัด/ผู้บันทึกข้อมูล</p>
+          </div>
+          <div style="text-align: center; width: 45%;">
+            <p style="margin-bottom: 45px;">ลงชื่อ ................................................................</p>
+            <p style="margin: 0;">( ................................................................ )</p>
+            <p style="margin: 4px 0 0 0; color: #555;">ผู้รับรอง/หัวหน้างาน</p>
+          </div>
+        </div>
+      </div>
+    `;
+
+    // 7. สั่งพิมพ์ทันที
+    window.print();
   }
 
   // ลงทะเบียน Service Worker สำหรับ PWA
@@ -760,10 +945,10 @@
     });
   }
 
-  // เริ่มต้นตั้งค่าวันที่และโหลดข้อมูล
+  // เริ่มต้นตั้งค่าวันที่และโหลดข้อมูลอัตโนมัติในเบื้องหลัง
   window.addEventListener('DOMContentLoaded', () => {
     initDefaultDate();
-    updateConnectionBadge();
+    loadData();
   });
 </script>
 
