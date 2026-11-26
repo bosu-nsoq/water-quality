@@ -1,8 +1,9 @@
-const CACHE_NAME = 'quality-water-check-v1';
+const CACHE_NAME = 'quality-water-check-v2';
 const STATIC_ASSETS = [
   './',
   './index.html',
   './manifest.json',
+  './icons/favicon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
   './icons/icon.svg'
