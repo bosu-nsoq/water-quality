@@ -7,16 +7,18 @@
   <meta name="description" content="ระบบบันทึกคุณภาพน้ำ">
   
   <!-- PWA & Apple iOS Meta Tags -->
-  <link rel="manifest" href="manifest.json">
+  <link rel="manifest" href="./manifest.json">
   <meta name="theme-color" content="#0a9396">
+  <meta name="mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="default">
   <meta name="apple-mobile-web-app-title" content="Water Quality">
   
   <!-- Favicon & PWA Icons (เก็บใน Repo โดยตรง) -->
-  <link rel="icon" type="image/png" href="./icons/favicon.png">
+  <link rel="icon" type="image/png" sizes="192x192" href="./icons/favicon.png">
   <link rel="shortcut icon" href="./icons/favicon.png">
-  <link rel="apple-touch-icon" href="./icons/icon-192.png">
+  <link rel="apple-touch-icon" href="./icons/apple-touch-icon.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="./icons/apple-touch-icon.png">
   <link rel="apple-touch-icon" sizes="192x192" href="./icons/icon-192.png">
   <link rel="apple-touch-icon" sizes="512x512" href="./icons/icon-512.png">
 
@@ -56,6 +58,47 @@
       max-width: 540px;
       margin: 0 auto;
       width: 100%;
+    }
+
+    /* แถบแจ้งเตือนติดตั้งแอป PWA */
+    .pwa-banner {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-radius: 16px;
+      padding: 8px 12px;
+      margin-bottom: 10px;
+      box-shadow: 0 4px 16px rgba(10, 147, 150, 0.15);
+      border: 1.5px solid var(--accent);
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      animation: fadeIn 0.3s ease;
+    }
+    .btn-pwa-install {
+      background: linear-gradient(135deg, #0a9396, #005f73);
+      color: #ffffff;
+      border: none;
+      border-radius: 20px;
+      padding: 5px 13px;
+      font-size: 12px;
+      font-weight: 600;
+      white-space: nowrap;
+      box-shadow: 0 2px 6px rgba(10, 147, 150, 0.3);
+      cursor: pointer;
+      transition: transform 0.15s ease;
+    }
+    .btn-pwa-install:active {
+      transform: scale(0.96);
+    }
+    .btn-pwa-close {
+      background: transparent;
+      border: none;
+      color: #888888;
+      font-size: 14px;
+      padding: 4px 6px;
+      cursor: pointer;
+      line-height: 1;
     }
 
     /* แถบสถานะผู้ใช้งาน (Guest / Admin) */
@@ -422,6 +465,21 @@
 </div>
 
 <div class="container main-wrapper">
+  <!-- แถบแนะนำการติดตั้งแอป PWA (แสดงเมื่อเปิดผ่านบราวเซอร์มือถือที่ยังไม่ได้ติดตั้ง) -->
+  <div id="pwaInstallBanner" class="pwa-banner" style="display: none;">
+    <div class="d-flex align-items-center gap-2">
+      <img src="./icons/icon-192.png" alt="App Icon" style="width: 34px; height: 34px; border-radius: 9px; box-shadow: 0 2px 5px rgba(0,0,0,0.15);">
+      <div style="line-height: 1.25;">
+        <div style="font-weight: 600; font-size: 13.5px; color: #005f73;">ติดตั้งแอป Water Quality</div>
+        <div style="font-size: 11px; color: #0a9396;">ใช้งานได้เต็มจอ เหมือนแอปมือถือ</div>
+      </div>
+    </div>
+    <div class="d-flex align-items-center gap-1">
+      <button type="button" class="btn-pwa-install" onclick="triggerPwaInstall()">📲 ติดตั้ง</button>
+      <button type="button" class="btn-pwa-close" onclick="dismissPwaBanner()" title="ปิด">✕</button>
+    </div>
+  </div>
+
   <!-- แถบสถานะผู้ใช้งาน (Guest / Admin) พร้อมปุ่มใส่ PIN เข้าสู่ระบบ -->
   <div class="glass-bar d-flex justify-content-between align-items-center">
     <div class="d-flex align-items-center gap-2">
@@ -1587,6 +1645,83 @@
     window.print();
   }
 
+  // PWA Install Prompt & Service Worker Logic
+  let deferredPrompt = null;
+
+  function isRunningStandalone() {
+    return window.matchMedia('(display-mode: standalone)').matches ||
+           window.navigator.standalone === true ||
+           document.referrer.includes('android-app://');
+  }
+
+  window.addEventListener('beforeinstallprompt', (e) => {
+    // ป้องกัน mini-infobar อัตโนมัติ เพื่อใช้ปุ่มติดตั้งสวยงามของเรา
+    e.preventDefault();
+    deferredPrompt = e;
+    if (!isRunningStandalone() && !sessionStorage.getItem('pwa_dismissed')) {
+      const banner = document.getElementById('pwaInstallBanner');
+      if (banner) banner.style.display = 'flex';
+    }
+  });
+
+  function triggerPwaInstall() {
+    if (deferredPrompt) {
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          const banner = document.getElementById('pwaInstallBanner');
+          if (banner) banner.style.display = 'none';
+        }
+        deferredPrompt = null;
+      });
+    } else {
+      const isIOS = /iPad|iPhone|iPod/.test(navigator.userAgent) && !window.MSStream;
+      if (isIOS) {
+        Swal.fire({
+          title: 'ติดตั้งแอปบน iPhone / iPad',
+          html: `
+            <div style="text-align: left; font-size: 14px; line-height: 1.7; padding: 4px;">
+              <p>1. แตะปุ่ม <b>แชร์</b> <span style="font-size:18px;">⎋</span> (Share) ที่แถบเครื่องมือของ Safari</p>
+              <p>2. เลื่อนลงมาแล้วเลือก <b>"เพิ่มไปยังหน้าจอโฮม"</b> (Add to Home Screen) <span style="font-size:18px;">➕</span></p>
+              <p>3. แตะ <b>"เพิ่ม"</b> (Add) ที่มุมขวาบน</p>
+            </div>
+          `,
+          icon: 'info',
+          confirmButtonText: 'เข้าใจแล้ว',
+          confirmButtonColor: '#0a9396',
+          customClass: { popup: 'swal-font' }
+        });
+      } else {
+        Swal.fire({
+          title: 'วิธีติดตั้งแอป',
+          html: `
+            <div style="text-align: left; font-size: 14px; line-height: 1.7; padding: 4px;">
+              <p>1. แตะที่เมนู <b>จุดสามจุด (⋮)</b> ของเบราว์เซอร์</p>
+              <p>2. เลือก <b>"ติดตั้งแอป"</b> (Install app) หรือ <b>"เพิ่มลงในหน้าจอหลัก"</b></p>
+            </div>
+          `,
+          icon: 'info',
+          confirmButtonText: 'เข้าใจแล้ว',
+          confirmButtonColor: '#0a9396',
+          customClass: { popup: 'swal-font' }
+        });
+      }
+    }
+  }
+
+  function dismissPwaBanner() {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'none';
+    sessionStorage.setItem('pwa_dismissed', '1');
+  }
+
+  window.addEventListener('appinstalled', () => {
+    const banner = document.getElementById('pwaInstallBanner');
+    if (banner) banner.style.display = 'none';
+    deferredPrompt = null;
+    console.log('PWA installed successfully');
+  });
+
   // ลงทะเบียน Service Worker สำหรับ PWA
   if ('serviceWorker' in navigator) {
     window.addEventListener('load', () => {
@@ -1603,6 +1738,15 @@
     showSection('statsSection'); // เข้าแอปเป็น Guest แสดงกราฟสถิติในหน้าแรกเลย
     loadData();
     setTimeout(hideLoader, 2500); // สำรองเวลาสูงสุด 2.5 วินาที
+
+    // แสดงแถบติดตั้งสำหรับผู้ใช้ทั่วไปบนมือถือถ้ายังไม่ได้ติดตั้ง
+    if (!isRunningStandalone() && !sessionStorage.getItem('pwa_dismissed')) {
+      const isMobile = /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        const banner = document.getElementById('pwaInstallBanner');
+        if (banner) banner.style.display = 'flex';
+      }
+    }
   });
 </script>
 

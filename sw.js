@@ -1,4 +1,4 @@
-const CACHE_NAME = 'quality-water-check-v3';
+const CACHE_NAME = 'quality-water-check-v4';
 const STATIC_ASSETS = [
   './',
   './index.html',
@@ -6,13 +6,22 @@ const STATIC_ASSETS = [
   './icons/favicon.png',
   './icons/icon-192.png',
   './icons/icon-512.png',
+  './icons/apple-touch-icon.png',
   './icons/icon.svg'
 ];
 
-// Install: Cache core files
+// Install: Cache core files resiliently
 self.addEventListener('install', (event) => {
   event.waitUntil(
-    caches.open(CACHE_NAME).then((cache) => cache.addAll(STATIC_ASSETS))
+    caches.open(CACHE_NAME).then(async (cache) => {
+      for (const asset of STATIC_ASSETS) {
+        try {
+          await cache.add(asset);
+        } catch (err) {
+          console.warn('Failed to cache asset:', asset, err);
+        }
+      }
+    })
   );
   self.skipWaiting();
 });
@@ -34,7 +43,7 @@ self.addEventListener('activate', (event) => {
 self.addEventListener('fetch', (event) => {
   const url = event.request.url;
   
-  // ห้ามแคช API request ของ Google Apps Script หรือเมธอด POST
+  // ห้ามแคช API request ของ Google Apps Script หรือเมธอดไม่ใช่ GET
   if (event.request.method !== 'GET' || url.includes('script.google.com')) {
     return;
   }
